@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Facebook, Instagram, Mail, Youtube, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,17 +75,20 @@ export default function Footer() {
               Follow us
             </h4>
             <div className="mt-5 flex gap-3">
-              {SOCIALS.map(({ icon: Icon, href, label }) => (
-                
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  data-cursor-hover
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-mint-dim text-mint transition-transform hover:scale-105"
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
+              {SOCIALS.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <Link
+                    key={social.label}
+                    href={social.href}
+                    aria-label={social.label}
+                    data-cursor-hover
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-mint-dim text-mint transition-transform hover:scale-105"
+                  >
+                    <Icon size={18} />
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
@@ -93,15 +97,15 @@ export default function Footer() {
               About us
             </h4>
             <ul className="mt-5 space-y-3">
-              {ABOUT_LINKS.map(({ label, href }) => (
-                <li key={label}>
-                  
-                    href={href}
+              {ABOUT_LINKS.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    href={item.href}
                     data-cursor-hover
                     className="text-sm text-graphite transition-colors hover:text-signal"
                   >
-                    {label}
-                  </a>
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
