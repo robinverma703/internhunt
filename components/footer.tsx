@@ -46,7 +46,7 @@ export default function Footer() {
 
             {submitted ? (
               <p className="mt-6 flex items-center gap-2 text-sm font-medium text-mint">
-                You are on the list. Watch your inbox.
+                You're on the list. Watch your inbox
               </p>
             ) : (
               <form onSubmit={handleSubscribe} className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -75,7 +75,7 @@ export default function Footer() {
             </h4>
             <div className="mt-5 flex gap-3">
               {SOCIALS.map(({ icon: Icon, href, label }) => (
-                <a
+                
                   key={label}
                   href={href}
                   aria-label={label}
@@ -95,7 +95,7 @@ export default function Footer() {
             <ul className="mt-5 space-y-3">
               {ABOUT_LINKS.map(({ label, href }) => (
                 <li key={label}>
-                  <a
+                  
                     href={href}
                     data-cursor-hover
                     className="text-sm text-graphite transition-colors hover:text-signal"
