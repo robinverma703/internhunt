@@ -1,9 +1,11 @@
+export const dynamic = 'force-dynamic';
+
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import JobFeed from "@/components/job-feed";
 import { Badge } from "@/components/ui/badge";
 
-export const revalidate = 0; // always fetch fresh — this is an SSR feed, not static
+
 
 export default async function DashboardPage() {
   const supabase = await createClient();
