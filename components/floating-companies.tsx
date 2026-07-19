@@ -1,59 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-
 const COMPANIES = [
   "Google", "Microsoft", "Amazon", "Deloitte", "TCS", "Infosys",
   "Adobe", "Flipkart", "Zomato", "Swiggy", "PwC", "EY",
-  "Accenture", "Wipro", "Paytm", "JPMorgan",
 ];
 
-const DIRECTIONS = [
-  { x: -80, y: -40 },
-  { x: 80, y: -40 },
-  { x: -80, y: 40 },
-  { x: 80, y: 40 },
+const COMPANIES_ROW_2 = [
+  "Accenture", "Wipro", "Paytm", "JPMorgan", "HSBC", "IBM",
+  "Nestle", "Philips", "Mercedes", "Dell", "Motorola", "Canon",
 ];
 
-const SLOT_COUNT = 4;
-const INTERVAL_MS = 2200;
-const STAGGER_MS = 550;
-
-function useRotatingWord(offset: number) {
-  const [index, setIndex] = useState(offset);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const id = setInterval(() => {
-        setIndex((i) => (i + SLOT_COUNT) % COMPANIES.length);
-      }, INTERVAL_MS);
-      return () => clearInterval(id);
-    }, offset * STAGGER_MS);
-    return () => clearTimeout(timeout);
-  }, [offset]);
-
-  return COMPANIES[index % COMPANIES.length];
-}
-
-function Slot({ slotIndex }: { slotIndex: number }) {
-  const word = useRotatingWord(slotIndex);
-  const dir = DIRECTIONS[slotIndex % DIRECTIONS.length];
+function MarqueeRow({
+  items,
+  reverse = false,
+}: {
+  items: string[];
+  reverse?: boolean;
+}) {
+  const doubled = [...items, ...items];
 
   return (
-    <div className="flex h-16 items-center justify-center md:h-20">
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={word}
-          initial={{ opacity: 0, x: dir.x, y: dir.y, scale: 0.85 }}
-          animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.08 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="select-none whitespace-nowrap font-display text-2xl font-extrabold tracking-tight text-graphite/70 md:text-4xl"
-        >
-          {word}
-        </motion.span>
-      </AnimatePresence>
+    <div className="relative flex overflow-hidden">
+      <div
+        className={`flex shrink-0 items-center gap-12 pr-12 ${
+          reverse ? "animate-marquee-reverse" : "animate-marquee"
+        }`}
+      >
+        {doubled.map((name, i) => (
+          <span
+            key={`${name}-${i}`}
+            className="select-none whitespace-nowrap font-display text-2xl font-extrabold tracking-tight text-graphite/70 md:text-4xl"
+          >
+            {name}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -65,11 +46,44 @@ export default function FloatingCompanies() {
         Where our users land internships
       </p>
 
-      <div className="mx-auto mt-8 grid max-w-4xl grid-cols-2 gap-x-6 gap-y-4 px-6 md:grid-cols-4">
-        {Array.from({ length: SLOT_COUNT }).map((_, i) => (
-          <Slot key={i} slotIndex={i} />
-        ))}
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-paper to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-paper to-transparent"
+        aria-hidden
+      />
+
+      <div className="mt-10 flex flex-col gap-6">
+        <MarqueeRow items={COMPANIES} />
+        <MarqueeRow items={COMPANIES_ROW_2} reverse />
       </div>
+
+      <style jsx>{`
+        @keyframes marquee {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+        @keyframes marquee-reverse {
+          from {
+            transform: translateX(-50%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 28s linear infinite;
+        }
+        .animate-marquee-reverse {
+          animation: marquee-reverse 28s linear infinite;
+        }
+      `}</style>
     </section>
   );
 }
