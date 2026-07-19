@@ -1,6 +1,6 @@
 ﻿import Navbar from "@/components/navbar";
 import Hero from "@/components/hero";
-import SiteFooter from "@/components/footer";
+import Footer from "@/components/footer";
 import FloatingCompanies from "@/components/floating-companies";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
