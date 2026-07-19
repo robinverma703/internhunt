@@ -46,7 +46,7 @@ export default function Footer() {
 
             {submitted ? (
               <p className="mt-6 flex items-center gap-2 text-sm font-medium text-mint">
-                You're on the list. Watch your inbox
+                Youre on the list. Watch your inbox
               </p>
             ) : (
               <form onSubmit={handleSubscribe} className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -110,7 +110,7 @@ export default function Footer() {
 
         <div className="mt-14 border-t border-line pt-6">
           <p className="text-sm text-muted">
-            © {new Date().getFullYear()} InternHunt. Built for people trying to actually get hired.
+            InternHunt. Built for people trying to actually get hired.
           </p>
         </div>
       </div>
