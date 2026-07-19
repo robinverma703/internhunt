@@ -1,6 +1,6 @@
-import Navbar from "@/components/navbar";
+﻿import Navbar from "@/components/navbar";
 import Hero from "@/components/hero";
-import Footer from "@/components/site-footer";
+import SiteFooter from "@/components/footer";
 import FloatingCompanies from "@/components/floating-companies";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ const VALUE_PROPS = [
   {
     icon: ShieldCheck,
     title: "One payment, no subscriptions",
-    body: "₹99 unlocks the full feed for good. No recurring charges, no upsells.",
+    body: "â‚¹99 unlocks the full feed for good. No recurring charges, no upsells.",
   },
 ];
 
@@ -58,7 +58,7 @@ export default function LandingPage() {
               Simple pricing
             </span>
             <div>
-              <span className="text-5xl font-semibold tracking-tight text-graphite">₹99</span>
+              <span className="text-5xl font-semibold tracking-tight text-graphite">â‚¹99</span>
               <span className="ml-2 text-muted">one-time</span>
             </div>
             <ul className="grid gap-2 text-sm text-graphite">
