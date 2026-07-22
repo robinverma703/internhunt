@@ -16,45 +16,47 @@ const TITLES = [
   "Content & Social Intern — B2B SaaS",
 ];
 
-const COMPANY_BADGES = [
-  { name: "Google", top: "22%", left: "89%", delay: 0.3, dur: 4.2 },
-  { name: "Amazon", top: "42%", left: "93%", delay: 0.7, dur: 4.6 },
-  { name: "Swiggy", top: "68%", left: "90%", delay: 1.0, dur: 4.0 },
-  { name: "Microsoft", top: "30%", left: "-4%", delay: 0.5, dur: 4.4 },
-  { name: "TCS", top: "50%", left: "-5%", delay: 0.9, dur: 4.8 },
-  { name: "Flipkart", top: "70%", left: "-3%", delay: 1.3, dur: 4.3 },
+const COMPANY_WATERMARKS = [
+  { name: "Google", top: "8%", left: "60%", size: "text-6xl md:text-8xl", rotate: -8, opacity: 0.09, delay: 0.2, dur: 7 },
+  { name: "Amazon", top: "70%", left: "66%", size: "text-5xl md:text-7xl", rotate: 6, opacity: 0.08, delay: 0.6, dur: 8 },
+  { name: "Swiggy", top: "38%", left: "76%", size: "text-4xl md:text-6xl", rotate: -5, opacity: 0.1, delay: 1.0, dur: 6.5 },
+  { name: "Microsoft", top: "15%", left: "-10%", size: "text-5xl md:text-7xl", rotate: 8, opacity: 0.09, delay: 0.4, dur: 7.5 },
+  { name: "TCS", top: "55%", left: "-8%", size: "text-6xl md:text-8xl", rotate: -6, opacity: 0.08, delay: 0.8, dur: 6.8 },
+  { name: "Flipkart", top: "85%", left: "3%", size: "text-4xl md:text-6xl", rotate: 5, opacity: 0.1, delay: 1.2, dur: 7.2 },
 ];
 
-function CompanyBadge({
+function CompanyWatermark({
   name,
   top,
   left,
+  size,
+  rotate,
+  opacity,
   delay,
   dur,
 }: {
   name: string;
   top: string;
   left: string;
+  size: string;
+  rotate: number;
+  opacity: number;
   delay: number;
   dur: number;
 }) {
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none absolute z-10 select-none whitespace-nowrap rounded-full border border-line bg-white/90 px-3 py-1.5 text-xs font-bold text-graphite shadow-card backdrop-blur-sm md:text-sm"
-      style={{ top, left }}
-      initial={{ opacity: 0, scale: 0.7 }}
+      className={`pointer-events-none absolute z-0 select-none whitespace-nowrap font-display font-extrabold text-graphite ${size}`}
+      style={{ top, left, rotate }}
+      initial={{ opacity: 0 }}
       animate={{
-        opacity: 1,
-        scale: 1,
-        y: [0, -14, 0],
-        rotate: [0, 4, -4, 0],
+        opacity,
+        y: [0, -20, 0],
       }}
       transition={{
-        opacity: { duration: 0.5, delay },
-        scale: { duration: 0.5, delay },
+        opacity: { duration: 1, delay },
         y: { duration: dur, repeat: Infinity, ease: "easeInOut", delay },
-        rotate: { duration: dur, repeat: Infinity, ease: "easeInOut", delay },
       }}
     >
       {name}
@@ -75,6 +77,10 @@ export default function Hero() {
         aria-hidden
         className="pointer-events-none absolute -right-16 top-40 h-64 w-64 rounded-full bg-mint/25 blur-3xl"
       />
+
+      {COMPANY_WATERMARKS.map((w) => (
+        <CompanyWatermark key={w.name} {...w} />
+      ))}
 
       <motion.div
         aria-hidden
@@ -174,10 +180,6 @@ export default function Hero() {
       >
         ⭐
       </motion.div>
-
-      {COMPANY_BADGES.map((badge) => (
-        <CompanyBadge key={badge.name} {...badge} />
-      ))}
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 pb-20 pt-16 md:grid-cols-2 md:pb-32 md:pt-24">
         <div className="relative z-20">
