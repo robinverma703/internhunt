@@ -58,7 +58,7 @@ export default function Hero() {
         className="pointer-events-none absolute z-0 overflow-hidden"
         style={{ top: "68%", left: 0, width: "50%" }}
       >
-        <div className="company-track-a flex w-max flex-row-reverse items-center whitespace-nowrap">
+        <div className="company-track-b flex w-max items-center whitespace-nowrap">
           {companiesLoop.map((name, i) => (
             <span
               key={`b-${i}`}
@@ -279,7 +279,7 @@ export default function Hero() {
       </div>
 
       <style jsx>{`
-        @keyframes company-scroll {
+        @keyframes company-scroll-left {
           from {
             transform: translateX(0%);
           }
@@ -287,8 +287,19 @@ export default function Hero() {
             transform: translateX(-50%);
           }
         }
+        @keyframes company-scroll-right {
+          from {
+            transform: translateX(-50%);
+          }
+          to {
+            transform: translateX(0%);
+          }
+        }
         .company-track-a {
-          animation: company-scroll 26s linear infinite;
+          animation: company-scroll-left 60s linear infinite;
+        }
+        .company-track-b {
+          animation: company-scroll-right 60s linear infinite;
         }
       `}</style>
     </section>
