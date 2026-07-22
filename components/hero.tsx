@@ -270,9 +270,15 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-20 h-[420px] overflow-hidden rounded-2xl border border-line bg-surface shadow-card"
         >
-          <div className="absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-surface/70 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-surface/70 to-transparent" />
-          <div className="marquee-track flex flex-col gap-3 p-5">
+          <div
+            className="marquee-track flex flex-col gap-3 p-5"
+            style={{
+              maskImage:
+                "linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)",
+            }}
+          >
             {loop.map(function (title, i) {
               return (
                 <motion.div

@@ -36,5 +36,5 @@
 }
 
 .marquee-track {
-  animation: marquee 28s linear infinite reverse;
+  animation: marquee 28s linear infinite;
 }
