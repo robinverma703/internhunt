@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,51 +17,56 @@ const TITLES = [
   "Content & Social Intern — B2B SaaS",
 ];
 
-const COMPANY_WATERMARKS = [
-  { name: "Google", top: "8%", left: "60%", size: "text-6xl md:text-8xl", rotate: -8, opacity: 0.09, delay: 0.2, dur: 7 },
-  { name: "Amazon", top: "70%", left: "66%", size: "text-5xl md:text-7xl", rotate: 6, opacity: 0.08, delay: 0.6, dur: 8 },
-  { name: "Swiggy", top: "38%", left: "76%", size: "text-4xl md:text-6xl", rotate: -5, opacity: 0.1, delay: 1.0, dur: 6.5 },
-  { name: "Microsoft", top: "15%", left: "-10%", size: "text-5xl md:text-7xl", rotate: 8, opacity: 0.09, delay: 0.4, dur: 7.5 },
-  { name: "TCS", top: "55%", left: "-8%", size: "text-6xl md:text-8xl", rotate: -6, opacity: 0.08, delay: 0.8, dur: 6.8 },
-  { name: "Flipkart", top: "85%", left: "3%", size: "text-4xl md:text-6xl", rotate: 5, opacity: 0.1, delay: 1.2, dur: 7.2 },
+const COMPANIES = [
+  "Google", "Microsoft", "Amazon", "Swiggy", "Flipkart",
+  "Zomato", "Adobe", "TCS", "Infosys", "Deloitte",
 ];
 
+function useCyclingName(startIndex: number, intervalMs: number) {
+  const [index, setIndex] = useState(startIndex);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 2) % COMPANIES.length);
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, []);
+
+  return COMPANIES[index % COMPANIES.length];
+}
+
 function CompanyWatermark({
-  name,
-  top,
-  left,
-  size,
-  rotate,
-  opacity,
-  delay,
-  dur,
+  side,
+  startIndex,
 }: {
-  name: string;
-  top: string;
-  left: string;
-  size: string;
-  rotate: number;
-  opacity: number;
-  delay: number;
-  dur: number;
+  side: "left" | "right";
+  startIndex: number;
 }) {
+  const name = useCyclingName(startIndex, 3200);
+  const fromX = side === "left" ? -120 : 120;
+  const position =
+    side === "left"
+      ? { top: "20%", left: "-4%" }
+      : { top: "58%", left: "62%" };
+
   return (
-    <motion.div
-      aria-hidden
-      className={`pointer-events-none absolute z-0 select-none whitespace-nowrap font-display font-extrabold text-graphite ${size}`}
-      style={{ top, left, rotate }}
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity,
-        y: [0, -20, 0],
-      }}
-      transition={{
-        opacity: { duration: 1, delay },
-        y: { duration: dur, repeat: Infinity, ease: "easeInOut", delay },
-      }}
+    <div
+      className="pointer-events-none absolute z-0 hidden md:block"
+      style={position}
     >
-      {name}
-    </motion.div>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={name}
+          initial={{ opacity: 0, x: fromX }}
+          animate={{ opacity: 0.12, x: 0 }}
+          exit={{ opacity: 0, x: -fromX }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          className="select-none whitespace-nowrap font-display text-7xl font-black tracking-tighter text-graphite md:text-9xl"
+        >
+          {name}
+        </motion.span>
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -78,9 +84,8 @@ export default function Hero() {
         className="pointer-events-none absolute -right-16 top-40 h-64 w-64 rounded-full bg-mint/25 blur-3xl"
       />
 
-      {COMPANY_WATERMARKS.map((w) => (
-        <CompanyWatermark key={w.name} {...w} />
-      ))}
+      <CompanyWatermark side="left" startIndex={0} />
+      <CompanyWatermark side="right" startIndex={1} />
 
       <motion.div
         aria-hidden
