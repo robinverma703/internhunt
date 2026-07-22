@@ -38,14 +38,14 @@ export default function Hero() {
 
       <div
         aria-hidden
-        className="pointer-events-none absolute z-0 w-full overflow-hidden"
-        style={{ top: "18%" }}
+        className="pointer-events-none absolute z-0 overflow-hidden"
+        style={{ top: "16%", left: 0, width: "50%" }}
       >
-        <div className="company-track-ltr flex items-center whitespace-nowrap">
+        <div className="company-track-a flex w-max items-center whitespace-nowrap">
           {companiesLoop.map((name, i) => (
             <span
-              key={`ltr-${i}`}
-              className="mx-[45vw] select-none font-display text-6xl font-black tracking-tighter text-graphite/10 md:text-8xl"
+              key={`a-${i}`}
+              className="mx-[20vw] select-none font-display text-5xl font-black tracking-tighter text-graphite/10 md:text-7xl"
             >
               {name}
             </span>
@@ -55,14 +55,14 @@ export default function Hero() {
 
       <div
         aria-hidden
-        className="pointer-events-none absolute z-0 w-full overflow-hidden"
-        style={{ top: "58%" }}
+        className="pointer-events-none absolute z-0 overflow-hidden"
+        style={{ top: "68%", left: 0, width: "50%" }}
       >
-        <div className="company-track-rtl flex items-center whitespace-nowrap">
+        <div className="company-track-a flex w-max flex-row-reverse items-center whitespace-nowrap">
           {companiesLoop.map((name, i) => (
             <span
-              key={`rtl-${i}`}
-              className="mx-[45vw] select-none font-display text-6xl font-black tracking-tighter text-graphite/10 md:text-8xl"
+              key={`b-${i}`}
+              className="mx-[20vw] select-none font-display text-5xl font-black tracking-tighter text-graphite/10 md:text-7xl"
             >
               {name}
             </span>
@@ -279,27 +279,16 @@ export default function Hero() {
       </div>
 
       <style jsx>{`
-        @keyframes company-ltr {
-          from {
-            transform: translateX(-100%);
-          }
-          to {
-            transform: translateX(0%);
-          }
-        }
-        @keyframes company-rtl {
+        @keyframes company-scroll {
           from {
             transform: translateX(0%);
           }
           to {
-            transform: translateX(-100%);
+            transform: translateX(-50%);
           }
         }
-        .company-track-ltr {
-          animation: company-ltr 40s linear infinite;
-        }
-        .company-track-rtl {
-          animation: company-rtl 40s linear infinite;
+        .company-track-a {
+          animation: company-scroll 26s linear infinite;
         }
       `}</style>
     </section>
