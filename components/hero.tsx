@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -22,48 +21,9 @@ const COMPANIES = [
   "Zomato", "Adobe", "TCS", "Infosys", "Deloitte",
 ];
 
-function CompanyRow({
-  top,
-  direction,
-  offset,
-  duration,
-}: {
-  top: string;
-  direction: "ltr" | "rtl";
-  offset: number;
-  duration: number;
-}) {
-  const [index, setIndex] = useState(offset % COMPANIES.length);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % COMPANIES.length);
-    }, duration * 1000);
-    return () => clearInterval(id);
-  }, [duration]);
-
-  const name = COMPANIES[index];
-  const fromLeft = direction === "ltr" ? "-35%" : "130%";
-  const toLeft = direction === "ltr" ? "130%" : "-35%";
-
-  return (
-    <div className="pointer-events-none absolute inset-x-0 z-0 h-0" style={{ top }}>
-      <motion.span
-        key={index}
-        initial={{ left: fromLeft, opacity: 0 }}
-        animate={{ left: toLeft, opacity: [0, 0.14, 0.14, 0] }}
-        transition={{ duration, ease: "linear", opacity: { times: [0, 0.1, 0.85, 1] } }}
-        style={{ position: "absolute" }}
-        className="select-none whitespace-nowrap font-display text-6xl font-black tracking-tighter text-graphite md:text-8xl"
-      >
-        {name}
-      </motion.span>
-    </div>
-  );
-}
-
 export default function Hero() {
   const loop = [...TITLES, ...TITLES];
+  const companiesLoop = [...COMPANIES, ...COMPANIES];
 
   return (
     <section className="relative overflow-hidden">
@@ -76,8 +36,39 @@ export default function Hero() {
         className="pointer-events-none absolute -right-16 top-40 h-64 w-64 rounded-full bg-mint/25 blur-3xl"
       />
 
-      <CompanyRow top="18%" direction="ltr" offset={0} duration={7} />
-      <CompanyRow top="58%" direction="rtl" offset={5} duration={8} />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute z-0 w-full overflow-hidden"
+        style={{ top: "18%" }}
+      >
+        <div className="company-track-ltr flex items-center whitespace-nowrap">
+          {companiesLoop.map((name, i) => (
+            <span
+              key={`ltr-${i}`}
+              className="mx-[45vw] select-none font-display text-6xl font-black tracking-tighter text-graphite/10 md:text-8xl"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute z-0 w-full overflow-hidden"
+        style={{ top: "58%" }}
+      >
+        <div className="company-track-rtl flex items-center whitespace-nowrap">
+          {companiesLoop.map((name, i) => (
+            <span
+              key={`rtl-${i}`}
+              className="mx-[45vw] select-none font-display text-6xl font-black tracking-tighter text-graphite/10 md:text-8xl"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+      </div>
 
       <motion.div
         aria-hidden
@@ -286,6 +277,31 @@ export default function Hero() {
           </div>
         </motion.div>
       </div>
+
+      <style jsx>{`
+        @keyframes company-ltr {
+          from {
+            transform: translateX(-100%);
+          }
+          to {
+            transform: translateX(0%);
+          }
+        }
+        @keyframes company-rtl {
+          from {
+            transform: translateX(0%);
+          }
+          to {
+            transform: translateX(-100%);
+          }
+        }
+        .company-track-ltr {
+          animation: company-ltr 40s linear infinite;
+        }
+        .company-track-rtl {
+          animation: company-rtl 40s linear infinite;
+        }
+      `}</style>
     </section>
   );
 }
