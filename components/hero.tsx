@@ -23,7 +23,18 @@ const COMPANIES = [
 
 export default function Hero() {
   const loop = [...TITLES, ...TITLES];
-  const companiesLoop = [...COMPANIES, ...COMPANIES];
+
+  // Row A: normal order
+  const companiesLoopA = [...COMPANIES, ...COMPANIES];
+
+  // Row B: same companies but rotated, so it never shows the same
+  // company at the same position/time as Row A.
+  const ROTATE_BY = 5;
+  const rotatedCompanies = [
+    ...COMPANIES.slice(ROTATE_BY),
+    ...COMPANIES.slice(0, ROTATE_BY),
+  ];
+  const companiesLoopB = [...rotatedCompanies, ...rotatedCompanies];
 
   return (
     <section className="relative overflow-hidden">
@@ -41,8 +52,8 @@ export default function Hero() {
         className="pointer-events-none absolute z-0 overflow-hidden"
         style={{ top: "16%", left: 0, width: "50%" }}
       >
-        <div className="company-track-a flex w-max items-center whitespace-nowrap">
-          {companiesLoop.map((name, i) => (
+        <div className="company-track-left flex w-max items-center whitespace-nowrap">
+          {companiesLoopA.map((name, i) => (
             <span
               key={`a-${i}`}
               className="mx-[20vw] select-none font-display text-5xl font-black tracking-tighter text-graphite/10 md:text-7xl"
@@ -58,8 +69,8 @@ export default function Hero() {
         className="pointer-events-none absolute z-0 overflow-hidden"
         style={{ top: "68%", left: 0, width: "50%" }}
       >
-        <div className="company-track-b flex w-max items-center whitespace-nowrap">
-          {companiesLoop.map((name, i) => (
+        <div className="company-track-right flex w-max items-center whitespace-nowrap">
+          {companiesLoopB.map((name, i) => (
             <span
               key={`b-${i}`}
               className="mx-[20vw] select-none font-display text-5xl font-black tracking-tighter text-graphite/10 md:text-7xl"
@@ -259,8 +270,8 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-20 h-[420px] overflow-hidden rounded-2xl border border-line bg-surface shadow-card"
         >
-          <div className="absolute inset-x-0 top-0 z-10 h-16 bg-gradient-to-b from-surface to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-t from-surface to-transparent" />
+          <div className="absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-surface/70 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-surface/70 to-transparent" />
           <div className="marquee-track flex flex-col gap-3 p-5">
             {loop.map(function (title, i) {
               return (
@@ -295,11 +306,11 @@ export default function Hero() {
             transform: translateX(0%);
           }
         }
-        .company-track-a {
-          animation: company-scroll-left 60s linear infinite;
+        .company-track-left {
+          animation: company-scroll-left 50s linear infinite;
         }
-        .company-track-b {
-          animation: company-scroll-right 60s linear infinite;
+        .company-track-right {
+          animation: company-scroll-right 50s linear infinite;
         }
       `}</style>
     </section>
