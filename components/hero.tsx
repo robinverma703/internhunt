@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,50 +22,42 @@ const COMPANIES = [
   "Zomato", "Adobe", "TCS", "Infosys", "Deloitte",
 ];
 
-function useCyclingName(startIndex: number, intervalMs: number) {
-  const [index, setIndex] = useState(startIndex);
+function CompanyRow({
+  top,
+  direction,
+  offset,
+  duration,
+}: {
+  top: string;
+  direction: "ltr" | "rtl";
+  offset: number;
+  duration: number;
+}) {
+  const [index, setIndex] = useState(offset % COMPANIES.length);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setIndex((i) => (i + 2) % COMPANIES.length);
-    }, intervalMs);
+      setIndex((i) => (i + 1) % COMPANIES.length);
+    }, duration * 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [duration]);
 
-  return COMPANIES[index % COMPANIES.length];
-}
-
-function CompanyWatermark({
-  side,
-  startIndex,
-}: {
-  side: "left" | "right";
-  startIndex: number;
-}) {
-  const name = useCyclingName(startIndex, 3200);
-  const fromX = side === "left" ? -120 : 120;
-  const position =
-    side === "left"
-      ? { top: "20%", left: "-4%" }
-      : { top: "58%", left: "62%" };
+  const name = COMPANIES[index];
+  const fromLeft = direction === "ltr" ? "-35%" : "130%";
+  const toLeft = direction === "ltr" ? "130%" : "-35%";
 
   return (
-    <div
-      className="pointer-events-none absolute z-0 hidden md:block"
-      style={position}
-    >
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={name}
-          initial={{ opacity: 0, x: fromX }}
-          animate={{ opacity: 0.12, x: 0 }}
-          exit={{ opacity: 0, x: -fromX }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="select-none whitespace-nowrap font-display text-7xl font-black tracking-tighter text-graphite md:text-9xl"
-        >
-          {name}
-        </motion.span>
-      </AnimatePresence>
+    <div className="pointer-events-none absolute inset-x-0 z-0 h-0" style={{ top }}>
+      <motion.span
+        key={index}
+        initial={{ left: fromLeft, opacity: 0 }}
+        animate={{ left: toLeft, opacity: [0, 0.14, 0.14, 0] }}
+        transition={{ duration, ease: "linear", opacity: { times: [0, 0.1, 0.85, 1] } }}
+        style={{ position: "absolute" }}
+        className="select-none whitespace-nowrap font-display text-6xl font-black tracking-tighter text-graphite md:text-8xl"
+      >
+        {name}
+      </motion.span>
     </div>
   );
 }
@@ -84,8 +76,8 @@ export default function Hero() {
         className="pointer-events-none absolute -right-16 top-40 h-64 w-64 rounded-full bg-mint/25 blur-3xl"
       />
 
-      <CompanyWatermark side="left" startIndex={0} />
-      <CompanyWatermark side="right" startIndex={1} />
+      <CompanyRow top="18%" direction="ltr" offset={0} duration={7} />
+      <CompanyRow top="58%" direction="rtl" offset={5} duration={8} />
 
       <motion.div
         aria-hidden
