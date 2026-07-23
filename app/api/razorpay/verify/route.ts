@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { creditReferralReward } from "@/lib/referral";
 
 // Called from the client right after Razorpay Checkout succeeds, purely to
 // unlock the UI instantly. The webhook route is the authoritative source
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
     status: "paid",
   });
   await admin.from("users").update({ is_premium: true }).eq("id", user.id);
+  await creditReferralReward(user.id);
 
   return NextResponse.json({ success: true });
 }

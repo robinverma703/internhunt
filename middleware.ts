@@ -7,8 +7,17 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const PUBLIC_PATHS = ["/", "/login", "/auth/callback"];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const { response, user } = await updateSession(request);
+
+  // Track referral code from ?ref=CODE for 30 days
+  const refCode = searchParams.get("ref");
+  if (refCode) {
+    response.cookies.set("referral_code", refCode, {
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+  }
 
   const isPublic = PUBLIC_PATHS.some(
     (p) => pathname === p || pathname.startsWith("/_next") || pathname.startsWith("/api/razorpay/webhook")
@@ -79,10 +88,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Run on everything except static assets and image files, so the
-     * guard covers every page and API route while staying fast.
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

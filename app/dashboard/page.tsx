@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import JobFeed from "@/components/job-feed";
+import ReferralCard from "@/components/referral-card";
 import { Badge } from "@/components/ui/badge";
 
 
@@ -18,6 +19,22 @@ export default async function DashboardPage() {
     .from("jobs")
     .select("*")
     .order("created_at", { ascending: false });
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("referral_code, referral_earnings")
+    .eq("id", user?.id ?? "")
+    .single();
+
+  const { count: referralCount } = await supabase
+    .from("referrals")
+    .select("*", { count: "exact", head: true })
+    .eq("referrer_id", user?.id ?? "");
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const referralLink = profile?.referral_code
+    ? `${siteUrl}/?ref=${profile.referral_code}`
+    : "";
 
   return (
     <main className="min-h-screen bg-paper">
@@ -42,6 +59,14 @@ export default async function DashboardPage() {
             {jobs?.length ?? 0} live listings, updated continuously.
           </p>
         </div>
+
+        {referralLink && (
+          <ReferralCard
+            referralLink={referralLink}
+            referralCount={referralCount ?? 0}
+            earnings={profile?.referral_earnings ?? 0}
+          />
+        )}
 
         <JobFeed jobs={jobs ?? []} />
       </div>

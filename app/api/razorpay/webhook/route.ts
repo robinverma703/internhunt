@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { creditReferralReward } from "@/lib/referral";
 
 // Configure this exact URL as the webhook endpoint in the Razorpay
 // dashboard, subscribed to the `payment.captured` event, and set
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
       });
 
       await supabase.from("users").update({ is_premium: true }).eq("id", userId);
+      await creditReferralReward(userId);
     }
   }
 
