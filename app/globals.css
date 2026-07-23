@@ -35,6 +35,15 @@
   }
 }
 
+@keyframes marquee {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
 .marquee-track {
   animation: marquee 28s linear infinite;
 }
