@@ -50,7 +50,13 @@ export default function Hero() {
       <div
         aria-hidden
         className="pointer-events-none absolute z-0 overflow-hidden"
-        style={{ top: "16%", left: 0, width: "50%" }}
+        style={{
+          top: "16%",
+          left: 0,
+          width: "50%",
+          maskImage: "linear-gradient(to right, black 0%, black 70%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, black 0%, black 70%, transparent 100%)",
+        }}
       >
         <div className="company-track-left flex w-max items-center whitespace-nowrap">
           {companiesLoopA.map((name, i) => (
@@ -67,7 +73,13 @@ export default function Hero() {
       <div
         aria-hidden
         className="pointer-events-none absolute z-0 overflow-hidden"
-        style={{ top: "68%", left: 0, width: "50%" }}
+        style={{
+          top: "68%",
+          left: 0,
+          width: "50%",
+          maskImage: "linear-gradient(to right, black 0%, black 70%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, black 0%, black 70%, transparent 100%)",
+        }}
       >
         <div className="company-track-right flex w-max items-center whitespace-nowrap">
           {companiesLoopB.map((name, i) => (
