@@ -7,6 +7,12 @@ import { Facebook, Instagram, Mail, Youtube, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+const PRODUCT_LINKS = [
+  { label: "Browse internships", href: "#" },
+  { label: "How it works", href: "#" },
+  { label: "Pricing", href: "#" },
+];
+
 const ABOUT_LINKS = [
   { label: "Our story", href: "#" },
   { label: "How we verify listings", href: "#" },
@@ -32,7 +38,36 @@ export default function Footer() {
   return (
     <footer className="border-t border-line bg-paper">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+        {/* Brand row */}
+        <div className="flex flex-col gap-3 border-b border-line pb-10 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <span className="font-display text-xl font-semibold text-graphite">
+              Intern<span className="text-signal">Hunt</span>
+            </span>
+            <p className="mt-2 max-w-sm text-sm text-muted">
+              One feed for every real internship — checked by hand, delivered live.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            {SOCIALS.map((social) => {
+              const Icon = social.icon;
+              return (
+                <Link
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  data-cursor-hover
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-mint-dim text-mint transition-transform hover:scale-105"
+                >
+                  <Icon size={17} />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Main columns */}
+        <div className="grid grid-cols-1 gap-10 pt-10 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -47,7 +82,7 @@ export default function Footer() {
 
             {submitted ? (
               <p className="mt-6 flex items-center gap-2 text-sm font-medium text-mint">
-                Youre on the list. Watch your inbox
+                You're on the list. Watch your inbox.
               </p>
             ) : (
               <form onSubmit={handleSubscribe} className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -72,24 +107,21 @@ export default function Footer() {
 
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted">
-              Follow us
+              Product
             </h4>
-            <div className="mt-5 flex gap-3">
-              {SOCIALS.map((social) => {
-                const Icon = social.icon;
-                return (
+            <ul className="mt-5 space-y-3">
+              {PRODUCT_LINKS.map((item) => (
+                <li key={item.label}>
                   <Link
-                    key={social.label}
-                    href={social.href}
-                    aria-label={social.label}
+                    href={item.href}
                     data-cursor-hover
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-mint-dim text-mint transition-transform hover:scale-105"
+                    className="text-sm text-graphite transition-colors hover:text-signal"
                   >
-                    <Icon size={18} />
+                    {item.label}
                   </Link>
-                );
-              })}
-            </div>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div>
@@ -112,10 +144,18 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 border-t border-line pt-6">
+        <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted">
-            InternHunt. Built for people trying to actually get hired.
+            © {new Date().getFullYear()} InternHunt. Built for people trying to actually get hired.
           </p>
+          <div className="flex gap-6">
+            <Link href="#" data-cursor-hover className="text-sm text-muted hover:text-graphite">
+              Privacy Policy
+            </Link>
+            <Link href="#" data-cursor-hover className="text-sm text-muted hover:text-graphite">
+              Terms
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
