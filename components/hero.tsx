@@ -274,9 +274,9 @@ export default function Hero() {
             className="marquee-track flex flex-col gap-3 p-5"
             style={{
               maskImage:
-                "linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)",
+                "linear-gradient(to bottom, transparent 0, black 100px, black calc(100% - 100px), transparent 100%)",
               WebkitMaskImage:
-                "linear-gradient(to bottom, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)",
+                "linear-gradient(to bottom, transparent 0, black 100px, black calc(100% - 100px), transparent 100%)",
             }}
           >
             {loop.map(function (title, i) {
