@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: "InternHunt — Curated internships & jobs, one feed",
   description:
-    "The internship and job feed that filters the noise. Hand-checked listings, live, for ₹99.",
+    "The internship and job feed that filters the noise. Hand-checked listings, live, for ₹49 / 7 days.",
 };
 
 export default function RootLayout({

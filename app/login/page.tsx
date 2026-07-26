@@ -36,7 +36,7 @@ export default function LoginPage() {
             <div>
               <h1 className="text-lg font-semibold text-graphite">Sign in to continue</h1>
               <p className="mt-1 text-sm text-muted">
-                One account. Unlock the feed for ₹99, once.
+               One account. Unlock the feed for ₹49 — 7 days access.
               </p>
             </div>
             <Button

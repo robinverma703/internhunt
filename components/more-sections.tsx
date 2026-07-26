@@ -22,7 +22,7 @@ const TESTIMONIALS = [
     name: "Arjun M.",
     role: "SDE Intern, backend",
     quote:
-      "Paid the 99 rupees expecting nothing special. Got three real interviews in two weeks. Worth it.",
+    "Paid the 49 rupees expecting nothing special. Got three real interviews in that one week. Worth it.",  
   },
   {
     name: "Kavya R.",
@@ -34,8 +34,8 @@ const TESTIMONIALS = [
 
 const FAQS = [
   {
-    q: "Is the 99 rupees a one-time payment or a subscription?",
-    a: "One-time. You pay once and get lifetime access to the full feed, no recurring charges.",
+    q: "Is the 49 rupees a one-time payment or a subscription?",
+    a: "It's a 7-day access pass, not an auto-renewing subscription — you pay once and browse the full feed for a week. If you come back later, renewing costs ₹29.",
   },
   {
     q: "How often are new internships added?",

@@ -49,16 +49,21 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 4. Dashboard route -> must be premium
+  // 4. Dashboard route -> must be premium and not expired
   if (pathname.startsWith("/dashboard")) {
     const supabase = createServiceRoleClient();
     const { data } = await supabase
       .from("users")
-      .select("is_premium")
+      .select("is_premium, premium_expires_at")
       .eq("id", user.id)
       .single();
 
-    if (!data?.is_premium) {
+    const isActive =
+      data?.is_premium &&
+      data?.premium_expires_at &&
+      new Date(data.premium_expires_at) > new Date();
+
+    if (!isActive) {
       const url = request.nextUrl.clone();
       url.pathname = "/pay";
       return NextResponse.redirect(url);
@@ -66,16 +71,21 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 5. Logged-in user visiting /pay while already premium -> dashboard
+  // 5. Logged-in user visiting /pay while already premium and not expired -> dashboard
   if (pathname.startsWith("/pay")) {
     const supabase = createServiceRoleClient();
     const { data } = await supabase
       .from("users")
-      .select("is_premium")
+      .select("is_premium, premium_expires_at")
       .eq("id", user.id)
       .single();
 
-    if (data?.is_premium) {
+    const isActive =
+      data?.is_premium &&
+      data?.premium_expires_at &&
+      new Date(data.premium_expires_at) > new Date();
+
+    if (isActive) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);

@@ -19,8 +19,8 @@ const VALUE_PROPS = [
   },
   {
     icon: ShieldCheck,
-    title: "One payment, no subscriptions",
-    body: "₹99 unlocks the full feed for good. No recurring charges, no upsells.",
+   title: "One payment, no surprises",
+    body: "₹49 unlocks the full feed for 7 days. Renew anytime for ₹29 — no auto-charges.",
   },
 ];
 
@@ -56,8 +56,8 @@ export default function LandingPage() {
               Simple pricing
             </span>
             <div>
-              <span className="text-5xl font-semibold tracking-tight text-graphite">₹99</span>
-              <span className="ml-2 text-muted">one-time</span>
+              <span className="text-5xl font-semibold tracking-tight text-graphite">₹49</span>
+              <span className="ml-2 text-muted">· 7 days access</span>
             </div>
             <ul className="grid gap-2 text-sm text-graphite">
               {[

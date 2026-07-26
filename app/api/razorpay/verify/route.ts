@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { creditReferralReward } from "@/lib/referral";
+import { PREMIUM_DURATION_DAYS } from "@/lib/razorpay";
 
 // Called from the client right after Razorpay Checkout succeeds, purely to
 // unlock the UI instantly. The webhook route is the authoritative source
@@ -38,7 +39,15 @@ export async function POST(request: Request) {
     order_id: razorpay_order_id,
     status: "paid",
   });
-  await admin.from("users").update({ is_premium: true }).eq("id", user.id);
+
+  const premiumExpiresAt = new Date(
+    Date.now() + PREMIUM_DURATION_DAYS * 24 * 60 * 60 * 1000
+  ).toISOString();
+
+  await admin
+    .from("users")
+    .update({ is_premium: true, premium_expires_at: premiumExpiresAt })
+    .eq("id", user.id);
   await creditReferralReward(user.id);
 
   return NextResponse.json({ success: true });
