@@ -1,34 +1,85 @@
-﻿import { redirect } from "next/navigation";
-import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { getPremiumPriceForUser, PREMIUM_DURATION_DAYS } from "@/lib/razorpay";
-import PayCheckout from "@/components/pay-checkout";
+﻿import Navbar from "@/components/navbar";
+import Hero from "@/components/hero";
+import Footer from "@/components/footer";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle2, Filter, ShieldCheck, Zap } from "lucide-react";
 
-export default async function PayPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+const VALUE_PROPS = [
+  {
+    icon: Filter,
+    title: "Hand-checked, not scraped and dumped",
+    body: "Every listing is reviewed before it goes live. No expired links, no ghost postings.",
+  },
+  {
+    icon: Zap,
+    title: "Built to feel instant",
+    body: "Server-rendered feed, no spinners on the jobs that matter most.",
+  },
+  {
+    icon: ShieldCheck,
+   title: "One payment, no surprises",
+    body: "₹49 unlocks the full feed for 7 days. Renew anytime for ₹29 — no auto-charges.",
+  },
+];
 
-  // Owner bypass: the site owner (ADMIN_EMAIL) never has to pay to test
-  // premium features. This check is server-side only and compares against
-  // an env var, so it can't be spoofed from the browser.
-  if (user && user.email === process.env.ADMIN_EMAIL) {
-    const admin = createServiceRoleClient();
-    const premiumExpiresAt = new Date(
-      Date.now() + PREMIUM_DURATION_DAYS * 24 * 60 * 60 * 1000
-    ).toISOString();
+export default function LandingPage() {
+  return (
+    <main className="min-h-screen bg-paper">
+      <Navbar />
+      <Hero />
 
-    await admin
-      .from("users")
-      .update({ is_premium: true, premium_expires_at: premiumExpiresAt })
-      .eq("id", user.id);
+      <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20">
+        <h2 className="text-2xl font-semibold tracking-tight text-graphite md:text-3xl">
+          Why InternHunt over a raw job board
+        </h2>
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {VALUE_PROPS.map(({ icon: Icon, title, body }) => (
+            <Card key={title} className="hover:shadow-card-hover">
+              <CardContent className="pt-6">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-signal-dim text-signal">
+                  <Icon size={20} />
+                </div>
+                <h3 className="mt-5 font-display text-base font-semibold text-graphite">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{body}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
 
-    redirect("/dashboard");
-  }
+      <section id="pricing" className="mx-auto max-w-3xl px-6 py-20">
+        <Card className="border-signal/20 bg-gradient-to-b from-signal-dim/60 to-surface">
+          <CardContent className="flex flex-col items-center gap-6 py-14 text-center">
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-signal-deep shadow-card">
+              Simple pricing
+            </span>
+            <div>
+              <span className="text-5xl font-semibold tracking-tight text-graphite">₹49</span>
+              <span className="ml-2 text-muted">· 7 days access</span>
+            </div>
+            <ul className="grid gap-2 text-sm text-graphite">
+              {[
+                "Full access to the curated feed",
+                "Search & filter by role, stipend, category",
+                "New listings added continuously",
+                "WhatsApp & Telegram support",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-mint" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/login" data-cursor-hover>
+              <Button variant="signal" size="lg">Get started</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </section>
 
-  const { amountPaise, isRenewal } = user
-    ? await getPremiumPriceForUser(user.id)
-    : { amountPaise: 4900, isRenewal: false };
-
-  return <PayCheckout priceRupees={amountPaise / 100} isRenewal={isRenewal} />;
+      <Footer />
+    </main>
+  );
 }
