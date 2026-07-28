@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AdminJobForm from "@/components/admin-job-form";
+import AdminStagingReview from "@/components/admin-staging-review";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,10 @@ export default async function AdminPage() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="text-2xl font-semibold tracking-tight text-graphite">Admin panel</h1>
         <p className="mt-1 text-sm text-muted">Add, review, and remove listings from the live feed.</p>
+
+        <div className="mt-8">
+          <AdminStagingReview />
+        </div>
 
         <div className="mt-8">
           <AdminJobForm initialJobs={jobs ?? []} />

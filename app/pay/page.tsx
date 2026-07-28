@@ -21,7 +21,7 @@ export default async function PayPage() {
     await admin
       .from("users")
       .update({ is_premium: true, premium_expires_at: premiumExpiresAt })
-      .eq("id", user.id);
+      .eq("id", user.id);  
 
     redirect("/dashboard");
   }
