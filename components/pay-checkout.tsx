@@ -1,18 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Script from "next/script";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { CheckCircle2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+import { submitPayment } from "@/lib/actions/submit-payment";
 
 const PERKS = [
   "Every internship & job link, unlocked",
@@ -27,51 +21,56 @@ interface PayCheckoutProps {
 }
 
 export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps) {
-  const router = useRouter();
+  const [utr, setUtr] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
-  async function handlePay() {
-    setLoading(true);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    try {
-      const res = await fetch("/api/razorpay/create-order", { method: "POST" });
-      if (!res.ok) throw new Error("Could not start checkout. Please try again.");
-      const order = await res.json();
+    setLoading(true);
 
-      const rzp = new window.Razorpay({
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.orderId,
-        name: "InternHunt",
-        description: "7-day access to the curated job feed",
-        theme: { color: "#2A4CFF" },
-        handler: async (response: any) => {
-          const verifyRes = await fetch("/api/razorpay/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(response),
-          });
-          if (verifyRes.ok) {
-            router.push("/dashboard");
-            router.refresh();
-          } else {
-            setError("Payment captured, but unlocking failed. Contact support and we'll sort it out.");
-          }
-        },
-        modal: { ondismiss: () => setLoading(false) },
-      });
-      rzp.open();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
+    const result = await submitPayment(utr, priceRupees);
+
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+    } else {
+      setSubmitted(true);
       setLoading(false);
     }
   }
 
+  if (submitted) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-paper px-6 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-md"
+        >
+          <Card className="border-signal/20">
+            <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal-dim text-signal">
+                <CheckCircle2 size={22} />
+              </span>
+              <h1 className="text-xl font-semibold text-graphite">Payment submitted!</h1>
+              <p className="text-sm text-muted">
+                We're verifying your payment. Your access will be activated shortly —
+                you'll get a WhatsApp message once it's unlocked. Usually takes a
+                couple of hours.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-paper px-6 py-16">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -108,20 +107,48 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
               ))}
             </ul>
 
-            <Button
-              variant="signal"
-              size="lg"
-              className="w-full"
-              data-cursor-hover
-              onClick={handlePay}
-              disabled={loading}
-            >
-              {loading ? "Opening checkout…" : `Pay ₹${priceRupees} & unlock`}
-            </Button>
+            <div className="w-full rounded-xl border border-line bg-white p-4">
+              <Image
+                src="/upi-qr.png"
+                alt="Scan to pay via UPI"
+                width={280}
+                height={400}
+                className="mx-auto h-auto w-full max-w-[220px] rounded-lg"
+              />
+              <p className="mt-3 text-xs text-muted">
+                Scan &amp; pay ₹{priceRupees} using any UPI app, then enter the
+                transaction / UTR number below.
+              </p>
+            </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
+              <input
+                type="text"
+                value={utr}
+                onChange={(e) => setUtr(e.target.value)}
+                placeholder="UTR / Transaction ID"
+                required
+                className="w-full rounded-xl border border-line bg-paper px-4 py-3.5 text-[15px] text-graphite outline-none transition focus:border-signal focus:ring-4 focus:ring-signal-dim"
+              />
 
-            <p className="text-xs text-muted">Secured by Razorpay. Cards, UPI, netbanking.</p>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+
+              <Button
+                type="submit"
+                variant="signal"
+                size="lg"
+                className="w-full"
+                data-cursor-hover
+                disabled={loading || utr.trim().length < 6}
+              >
+                {loading ? "Submitting…" : "I've paid — submit for verification"}
+              </Button>
+            </form>
+
+            <p className="text-xs text-muted">
+              Where do I find the UTR? Open your UPI app → payment history → tap
+              the payment → copy the "UTR" or "Transaction ID".
+            </p>
           </CardContent>
         </Card>
       </motion.div>
