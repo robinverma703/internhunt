@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import JobFeed from "@/components/job-feed";
 import ReferralCard from "@/components/referral-card";
 import { Badge } from "@/components/ui/badge";
+import PhoneGate from "@/components/phone-gate";
 
 
 
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("referral_code, referral_earnings")
+    .select("referral_code, referral_earnings, phone")
     .eq("id", user?.id ?? "")
     .single();
 
@@ -38,6 +39,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-paper">
+      {!profile?.phone && <PhoneGate />}
       <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="font-display text-[17px] font-semibold tracking-tight text-graphite">

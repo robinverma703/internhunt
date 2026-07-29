@@ -40,7 +40,18 @@ export async function POST(request: Request) {
         status: "paid",
       });
 
-      await supabase.from("users").update({ is_premium: true }).eq("id", userId);
+      const now = new Date();
+      const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      await supabase
+        .from("users")
+        .update({
+          is_premium: true,
+          subscription_start: now.toISOString(),
+          subscription_end: sevenDaysLater.toISOString(),
+        })
+        .eq("id", userId);
+
       await creditReferralReward(userId);
     }
   }

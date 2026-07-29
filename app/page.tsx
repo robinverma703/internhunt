@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Filter, ShieldCheck, Zap } from "lucide-react";
+import FeaturedInternship from "@/components/featured-internship";
+import { getFeaturedJob } from "@/lib/get-featured-job";
 
 const VALUE_PROPS = [
   {
@@ -24,11 +26,15 @@ const VALUE_PROPS = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const featuredJob = await getFeaturedJob();
+
   return (
     <main className="min-h-screen bg-paper">
       <Navbar />
       <Hero />
+
+      {featuredJob && <FeaturedInternship job={featuredJob} />}
 
       <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="text-2xl font-semibold tracking-tight text-graphite md:text-3xl">
