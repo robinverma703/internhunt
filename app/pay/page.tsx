@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getPremiumPriceForUser, PREMIUM_DURATION_DAYS } from "@/lib/razorpay";
 import PayCheckout from "@/components/pay-checkout";
+import PhoneGate from "@/components/phone-gate";
 
 export default async function PayPage() {
   const supabase = await createClient();
@@ -24,6 +25,14 @@ export default async function PayPage() {
       .eq("id", user.id);  
 
     redirect("/dashboard");
+  }
+
+  const { data: profile } = user
+    ? await supabase.from("users").select("phone").eq("id", user.id).single()
+    : { data: null };
+
+  if (user && !profile?.phone) {
+    return <PhoneGate />;
   }
 
   const { amountPaise, isRenewal } = user
