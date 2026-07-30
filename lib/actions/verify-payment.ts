@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import crypto from "crypto";
 
 export async function verifyPaymentScreenshot(
   paymentId: string,
@@ -17,10 +18,35 @@ export async function verifyPaymentScreenshot(
     const base64Image = Buffer.from(imageBuffer).toString("base64");
     const mimeType = imageRes.headers.get("content-type") || "image/jpeg";
 
+    // --- FRAUD CHECK: has this exact screenshot been used before? ---
+    const screenshotHash = crypto
+      .createHash("sha256")
+      .update(Buffer.from(imageBuffer))
+      .digest("hex");
+
+    const { data: duplicate } = await admin
+      .from("payments")
+      .select("id")
+      .eq("screenshot_hash", screenshotHash)
+      .neq("id", paymentId)
+      .maybeSingle();
+
+    if (duplicate) {
+      await admin
+        .from("payments")
+        .update({
+          ai_status: "flagged",
+          ai_reason: "This exact screenshot has already been used for a different payment — needs manual review.",
+          screenshot_hash: screenshotHash,
+        })
+        .eq("id", paymentId);
+      return;
+    }
+
     const prompt = `This is a screenshot of a UPI payment confirmation. Check carefully:
 1. Does it clearly show a SUCCESSFUL payment (not pending/failed)?
 2. Does the amount shown match ₹${expectedAmountRupees} (small differences due to fees are okay, but it must not be a completely different amount)?
-3. Does the UTR / Transaction ID / Reference number visible in the image match this: "${utr}"?
+3. If a UTR / Transaction ID / Reference number is visible in the image, does it match this: "${utr}"? If NO transaction ID is visible anywhere in the screenshot (many UPI apps hide it on the main success screen), that is NOT a reason to reject — just note it wasn't visible and continue checking the other points.
 4. Does the screenshot look genuine (a real UPI app screen), not edited or suspicious?
 
 Reply with ONLY a JSON object, nothing else, in this exact format:
@@ -61,6 +87,7 @@ Reply with ONLY a JSON object, nothing else, in this exact format:
           ai_status: "verified",
           ai_reason: parsed.reason ?? "Looks good",
           auto_approve_at: autoApproveAt,
+          screenshot_hash: screenshotHash,
         })
         .eq("id", paymentId);
     } else {
@@ -70,6 +97,7 @@ Reply with ONLY a JSON object, nothing else, in this exact format:
         .update({
           ai_status: "flagged",
           ai_reason: parsed.reason ?? "Could not verify — please check manually",
+          screenshot_hash: screenshotHash,
         })
         .eq("id", paymentId);
     }
