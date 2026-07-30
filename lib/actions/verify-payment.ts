@@ -71,6 +71,7 @@ Reply with ONLY a JSON object, nothing else, in this exact format:
     );
 
     const geminiData = await geminiRes.json();
+    console.log("Gemini response:", JSON.stringify(geminiData));
     const rawText: string =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
 
@@ -102,6 +103,7 @@ Reply with ONLY a JSON object, nothing else, in this exact format:
         .eq("id", paymentId);
     }
   } catch (err) {
+    console.error("AI verification failed:", err);
     // If anything goes wrong (API error, bad response, etc.), leave it for manual review
     await admin
       .from("payments")
