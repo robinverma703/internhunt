@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { CheckCircle2, Lock } from "lucide-react";
+import { CheckCircle2, Lock, Upload, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { submitPayment } from "@/lib/actions/submit-payment";
@@ -20,18 +21,47 @@ interface PayCheckoutProps {
   isRenewal: boolean;
 }
 
+type CheckStatus = "checking" | "waiting" | "approved" | "flagged" | "none";
+
 export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps) {
+  const router = useRouter();
   const [utr, setUtr] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
+  const [checkStatus, setCheckStatus] = useState<CheckStatus>("checking");
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [flagReason, setFlagReason] = useState<string | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshot(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!screenshot) {
+      setError("Please upload a screenshot of your payment success screen");
+      return;
+    }
+
     setLoading(true);
 
-    const result = await submitPayment(utr, priceRupees);
+    const formData = new FormData();
+    formData.append("utr", utr);
+    formData.append("amount", priceRupees.toString());
+    formData.append("screenshot", screenshot);
+
+    const result = await submitPayment(formData);
 
     if (result.error) {
       setError(result.error);
@@ -41,6 +71,42 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
       setLoading(false);
     }
   }
+
+  // Poll for payment status once submitted
+  useEffect(() => {
+    if (!submitted) return;
+
+    async function poll() {
+      try {
+        const res = await fetch("/api/check-payment-status");
+        const data = await res.json();
+
+        setCheckStatus(data.status);
+
+        if (data.status === "waiting" && typeof data.secondsLeft === "number") {
+          setSecondsLeft(data.secondsLeft);
+        }
+
+        if (data.status === "flagged") {
+          setFlagReason(data.reason ?? null);
+        }
+
+        if (data.status === "approved") {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setTimeout(() => router.push("/dashboard"), 1800);
+        }
+      } catch {
+        // network hiccup — just try again on next poll
+      }
+    }
+
+    poll();
+    pollRef.current = setInterval(poll, 3000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [submitted, router]);
 
   if (submitted) {
     return (
@@ -53,15 +119,43 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
         >
           <Card className="border-signal/20">
             <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal-dim text-signal">
-                <CheckCircle2 size={22} />
-              </span>
-              <h1 className="text-xl font-semibold text-graphite">Payment submitted!</h1>
-              <p className="text-sm text-muted">
-                We're verifying your payment. Your access will be activated shortly —
-                you'll get a WhatsApp message once it's unlocked. Usually takes a
-                couple of hours.
-              </p>
+              {checkStatus === "approved" ? (
+                <>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal-dim text-signal">
+                    <CheckCircle2 size={22} />
+                  </span>
+                  <h1 className="text-xl font-semibold text-graphite">You're unlocked! 🎉</h1>
+                  <p className="text-sm text-muted">
+                    Payment verified. Taking you to your dashboard…
+                  </p>
+                </>
+              ) : checkStatus === "flagged" ? (
+                <>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
+                    <AlertCircle size={22} />
+                  </span>
+                  <h1 className="text-xl font-semibold text-graphite">Needs a quick manual check</h1>
+                  <p className="text-sm text-muted">
+                    {flagReason ??
+                      "We couldn't automatically confirm your payment. Our team will review it and unlock your access shortly."}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal-dim text-signal">
+                    <Loader2 size={22} className="animate-spin" />
+                  </span>
+                  <h1 className="text-xl font-semibold text-graphite">Verifying your payment…</h1>
+                  <p className="text-sm text-muted">
+                    Hang tight, this usually takes under 2 minutes.
+                  </p>
+                  {secondsLeft !== null && (
+                    <div className="mt-1 text-3xl font-semibold tabular-nums text-signal">
+                      {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -117,7 +211,7 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
               />
               <p className="mt-3 text-xs text-muted">
                 Scan &amp; pay ₹{priceRupees} using any UPI app, then enter the
-                transaction / UTR number below.
+                transaction / UTR number below and upload a screenshot.
               </p>
             </div>
 
@@ -131,6 +225,28 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
                 className="w-full rounded-xl border border-line bg-paper px-4 py-3.5 text-[15px] text-graphite outline-none transition focus:border-signal focus:ring-4 focus:ring-signal-dim"
               />
 
+              <label className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-line bg-paper px-4 py-5 text-sm text-muted transition hover:border-signal">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Payment screenshot preview"
+                    className="max-h-40 rounded-lg object-contain"
+                  />
+                ) : (
+                  <>
+                    <Upload size={18} />
+                    <span>Upload payment success screenshot</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  required
+                />
+              </label>
+
               {error && <p className="text-sm text-red-600">{error}</p>}
 
               <Button
@@ -139,7 +255,7 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
                 size="lg"
                 className="w-full"
                 data-cursor-hover
-                disabled={loading || utr.trim().length < 6}
+                disabled={loading || utr.trim().length < 6 || !screenshot}
               >
                 {loading ? "Submitting…" : "I've paid — submit for verification"}
               </Button>
