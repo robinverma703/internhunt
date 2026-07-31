@@ -75,6 +75,7 @@ Reply with ONLY a JSON object, nothing else, in this exact format:
             },
           ],
           response_format: { type: "json_object" },
+          reasoning_effort: "none",
         }),
       }
     );
