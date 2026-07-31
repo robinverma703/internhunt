@@ -52,30 +52,38 @@ export async function verifyPaymentScreenshot(
 Reply with ONLY a JSON object, nothing else, in this exact format:
 {"verified": true or false, "reason": "short explanation in plain English"}`;
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    const groqRes = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
         body: JSON.stringify({
-          contents: [
+          model: "qwen/qwen3.6-27b",
+          messages: [
             {
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: mimeType, data: base64Image } },
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:${mimeType};base64,${base64Image}` },
+                },
               ],
             },
           ],
+          response_format: { type: "json_object" },
         }),
       }
     );
 
-    const geminiData = await geminiRes.json();
-    console.log("Gemini response:", JSON.stringify(geminiData));
-    const rawText: string =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+    const groqData = await groqRes.json();
+    console.log("Groq response:", JSON.stringify(groqData));
+    const rawText: string = groqData?.choices?.[0]?.message?.content ?? "{}";
 
-    // Gemini sometimes wraps JSON in ```json ... ``` — strip that if present
+    // Groq sometimes wraps JSON in ```json ... ``` — strip that if present
     const cleanText = rawText.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(cleanText);
 
