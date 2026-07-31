@@ -88,8 +88,8 @@ Reply with ONLY a JSON object, nothing else, in this exact format:
     const parsed = JSON.parse(cleanText);
 
     if (parsed.verified === true) {
-      // Passed AI check — schedule auto-approval 90 seconds from now
-      const autoApproveAt = new Date(Date.now() + 90 * 1000).toISOString();
+      // Passed AI check — schedule auto-approval 40 seconds from now
+      const autoApproveAt = new Date(Date.now() + 40 * 1000).toISOString();
       await admin
         .from("payments")
         .update({
