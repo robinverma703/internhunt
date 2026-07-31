@@ -203,10 +203,13 @@ export default function PayCheckout({ priceRupees, isRenewal }: PayCheckoutProps
 
             <div className="w-full rounded-xl border border-line bg-white p-4">
               <Image
-                src="/upi-qr.png"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(
+                  `upi://pay?pa=tusharverma016@axl&pn=InternHunt&am=${priceRupees}&cu=INR`
+                )}`}
                 alt="Scan to pay via UPI"
                 width={280}
-                height={400}
+                height={280}
+                unoptimized
                 className="mx-auto h-auto w-full max-w-[220px] rounded-lg"
               />
               <p className="mt-3 text-xs text-muted">
