@@ -22,7 +22,7 @@ const TESTIMONIALS = [
     name: "Arjun M.",
     role: "SDE Intern, backend",
     quote:
-    "Paid the 49 rupees expecting nothing special. Got three real interviews in that one week. Worth it.",  
+      "Signed up expecting nothing special. Got three real interviews in that one week. Worth it.",
   },
   {
     name: "Kavya R.",
@@ -34,8 +34,8 @@ const TESTIMONIALS = [
 
 const FAQS = [
   {
-    q: "Is the 49 rupees a one-time payment or a subscription?",
-    a: "It's a 7-day access pass, not an auto-renewing subscription — you pay once and browse the full feed for a week. If you come back later, renewing costs ₹29.",
+    q: "Is InternHunt really free?",
+    a: "Yes — full access to the feed is completely free, no payment or subscription required.",
   },
   {
     q: "How often are new internships added?",
@@ -43,7 +43,7 @@ const FAQS = [
   },
   {
     q: "What if a link turns out to be broken?",
-    a: "Message us on WhatsApp or Telegram and we will pull it down and refund your access if it happens repeatedly.",
+    a: "Message us on WhatsApp or Telegram and we will pull it down as soon as possible.",
   },
   {
     q: "Do you support students outside India?",

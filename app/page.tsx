@@ -21,8 +21,8 @@ const VALUE_PROPS = [
   },
   {
     icon: ShieldCheck,
-   title: "One payment, no surprises",
-    body: "₹49 unlocks the full feed for 7 days. Renew anytime for ₹29 — no auto-charges.",
+    title: "Completely free, no catch",
+    body: "Full access to every listing — no payment, no hidden charges, ever.",
   },
 ];
 
@@ -59,11 +59,11 @@ export default async function LandingPage() {
         <Card className="border-signal/20 bg-gradient-to-b from-signal-dim/60 to-surface">
           <CardContent className="flex flex-col items-center gap-6 py-14 text-center">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-signal-deep shadow-card">
-              Simple pricing
+              100% free
             </span>
             <div>
-              <span className="text-5xl font-semibold tracking-tight text-graphite">₹49</span>
-              <span className="ml-2 text-muted">· 7 days access</span>
+              <span className="text-5xl font-semibold tracking-tight text-graphite">₹0</span>
+              <span className="ml-2 text-muted">· full access</span>
             </div>
             <ul className="grid gap-2 text-sm text-graphite">
               {[
