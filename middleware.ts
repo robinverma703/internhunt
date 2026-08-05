@@ -4,7 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
-const PUBLIC_PATHS = ["/", "/login", "/auth/callback"];
+const PUBLIC_PATHS = ["/", "/login", "/auth/callback", "/about", "/faq"];
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
