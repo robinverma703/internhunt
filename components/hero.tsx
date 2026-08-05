@@ -272,7 +272,7 @@ export default function Hero() {
                 </Button>
               </motion.div>
             </Link>
-            <span className="text-sm text-muted">₹49 · 7 days access</span>
+            <span className="text-sm text-muted">100% free access</span>
           </motion.div>
         </div>
 
