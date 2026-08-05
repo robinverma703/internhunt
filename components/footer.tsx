@@ -8,15 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 const PRODUCT_LINKS = [
-  { label: "Browse internships", href: "#" },
-  { label: "How it works", href: "#" },
-  { label: "Pricing", href: "#" },
+  { label: "Browse internships", href: "/login" },
+  { label: "How it works", href: "/#how-it-works" },
+  { label: "FAQs", href: "/faq" },
 ];
 
 const ABOUT_LINKS = [
-  { label: "Our story", href: "#" },
-  { label: "How we verify listings", href: "#" },
-  { label: "Contact support", href: "#" },
+  { label: "Our story", href: "/about" },
+  { label: "How we verify listings", href: "/faq" },
+  {
+    label: "Contact support",
+    href: process.env.NEXT_PUBLIC_WHATSAPP_LINK || "/faq",
+  },
 ];
 
 const SOCIALS = [
