@@ -14,6 +14,7 @@ type StagedJob = {
   source: string;
   scraped_at: string;
   flags: string[];
+  location: string | null;
 };
 
 export default function AdminStagingReview() {
@@ -120,7 +121,7 @@ export default function AdminStagingReview() {
                   </div>
                 )}
                 <p style={{ fontSize: 12, opacity: 0.7 }}>
-                  {job.company} {job.stipend ? `· ${job.stipend}` : ""}
+                  {job.company} {job.location ? `· ${job.location}` : ""} {job.stipend ? `· ${job.stipend}` : ""}
                 </p>
                 <p style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
                   {job.description.slice(0, 150)}...

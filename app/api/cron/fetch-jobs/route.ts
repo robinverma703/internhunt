@@ -40,6 +40,7 @@ type CandidateJob = {
   category: string;
   source: string;
   source_id: string;
+  location: string | null;
 };
 
 function assessQuality(job: CandidateJob) {
@@ -82,6 +83,7 @@ async function fetchGreenhouse(): Promise<CandidateJob[]> {
             category: guessCategory(j.title),
             source: "greenhouse",
             source_id: String(j.id),
+            location: j.location?.name ?? null,
           }));
       } catch {
         return [];
@@ -120,6 +122,7 @@ async function fetchLever(): Promise<CandidateJob[]> {
             category: guessCategory(j.text),
             source: "lever",
             source_id: j.id,
+            location: j.categories?.location ?? null,
           }));
       } catch {
         return [];

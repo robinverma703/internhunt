@@ -8,26 +8,57 @@ import { Badge } from "@/components/ui/badge";
 import JobCard, { type Job } from "@/components/job-card";
 import { cn } from "@/lib/utils";
 
+const INDIAN_CITIES = [
+  "Bangalore", "Bengaluru", "Mumbai", "Delhi", "Gurgaon", "Gurugram", "Noida",
+  "Hyderabad", "Pune", "Chennai", "Kolkata", "Ahmedabad", "Jaipur", "Lucknow",
+  "Chandigarh", "Indore", "Nagpur", "Bhopal", "Patna", "Kochi", "Coimbatore",
+  "Visakhapatnam", "Surat", "Vadodara", "Nashik", "Faridabad", "Ghaziabad",
+  "Thane", "Navi Mumbai", "Mysore", "Mangalore", "Trivandrum", "Guwahati",
+  "Ranchi", "Raipur", "Dehradun", "Amritsar", "Ludhiana", "Vijayawada",
+  "Remote",
+];
+
 export default function JobFeed({ jobs }: { jobs: Job[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("All");
+  const [city, setCity] = useState<string>("All Cities");
 
   const categories = useMemo(
     () => ["All", ...Array.from(new Set(jobs.map((j) => j.category)))],
     [jobs]
   );
 
+  // Only show city chips that actually have at least one job right now,
+  // so the filter row doesn't fill up with cities that return nothing.
+  const availableCities = useMemo(() => {
+    const present = new Set(
+      jobs
+        .map((j) => j.location?.toLowerCase() ?? "")
+        .filter(Boolean)
+    );
+    return [
+      "All Cities",
+      ...INDIAN_CITIES.filter((c) =>
+        Array.from(present).some((loc) => loc.includes(c.toLowerCase()))
+      ),
+    ];
+  }, [jobs]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return jobs.filter((j) => {
       const matchesCategory = category === "All" || j.category === category;
+      const matchesCity =
+        city === "All Cities" ||
+        (j.location ?? "").toLowerCase().includes(city.toLowerCase());
       const matchesQuery =
         !q ||
         j.title.toLowerCase().includes(q) ||
-        j.company.toLowerCase().includes(q);
-      return matchesCategory && matchesQuery;
+        j.company.toLowerCase().includes(q) ||
+        (j.location ?? "").toLowerCase().includes(q);
+      return matchesCategory && matchesCity && matchesQuery;
     });
-  }, [jobs, query, category]);
+  }, [jobs, query, category, city]);
 
   return (
     <div>
@@ -62,6 +93,29 @@ export default function JobFeed({ jobs }: { jobs: Job[] }) {
           ))}
         </div>
       </div>
+
+      {availableCities.length > 1 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {availableCities.map((c) => (
+            <button
+              key={c}
+              data-cursor-hover
+              onClick={() => setCity(c)}
+              className="focus-visible:outline-none"
+            >
+              <Badge
+                variant={city === c ? "default" : "outline"}
+                className={cn(
+                  "cursor-pointer transition-colors",
+                  city === c && "bg-signal text-white"
+                )}
+              >
+                {c}
+              </Badge>
+            </button>
+          ))}
+        </div>
+      )}
 
       <p className="mt-4 text-sm text-muted">
         {filtered.length} {filtered.length === 1 ? "listing" : "listings"}

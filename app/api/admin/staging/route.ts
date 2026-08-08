@@ -42,7 +42,6 @@ export async function POST(request: Request) {
   const body = await request.json();
   const service = createServiceRoleClient();
 
-  // Bulk action: reject every pending job in one go
   if (body.action === "reject_all") {
     const { error } = await service
       .from("job_staging")
@@ -89,6 +88,7 @@ export async function POST(request: Request) {
       stipend: staged.stipend,
       link: staged.link,
       category: staged.category,
+      location: staged.location ?? null,
     })
     .select()
     .single();

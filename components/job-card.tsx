@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Building2, IndianRupee, X } from "lucide-react";
+import { ArrowUpRight, Building2, IndianRupee, MapPin, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,6 +15,7 @@ export type Job = {
   link: string;
   category: string;
   created_at: string;
+  location?: string | null;
 };
 
 function getFreshnessBadge(createdAt: string) {
@@ -126,6 +127,13 @@ export default function JobCard({ job }: { job: Job }) {
               <Badge variant="outline">{job.category}</Badge>
             </div>
 
+            {job.location && (
+              <span className="flex items-center gap-1 text-xs text-muted">
+                <MapPin size={12} />
+                {job.location}
+              </span>
+            )}
+
             {freshness && (
               <span
                 style={{
@@ -232,6 +240,12 @@ export default function JobCard({ job }: { job: Job }) {
 
               <div className="mt-4 flex items-center gap-3 flex-wrap">
                 <Badge variant="outline">{job.category}</Badge>
+                {job.location && (
+                  <span className="flex items-center gap-1 text-sm text-muted">
+                    <MapPin size={13} />
+                    {job.location}
+                  </span>
+                )}
                 {freshness && (
                   <span
                     style={{
@@ -268,13 +282,7 @@ export default function JobCard({ job }: { job: Job }) {
                 {job.description}
               </p>
 
-              <a
-                href={job.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-cursor-hover
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-graphite px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-signal"
-              >
+              <a href={job.link} target="_blank" rel="noopener noreferrer" data-cursor-hover className="mt-6 inline-flex items-center gap-2 rounded-full bg-graphite px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-signal">
                 Apply Now
                 <ArrowUpRight size={15} />
               </a>
