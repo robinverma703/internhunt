@@ -43,7 +43,7 @@ Respond with ONLY a single-line JSON object, no markdown, no explanation:
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,7 +56,13 @@ Respond with ONLY a single-line JSON object, no markdown, no explanation:
     );
 
     if (!res.ok) {
-      return { company: companyName, platform: "unknown", identifier: null, notes: `Gemini HTTP ${res.status}` };
+      const bodyText = await res.text().catch(() => "");
+      return {
+        company: companyName,
+        platform: "unknown",
+        identifier: null,
+        notes: `Gemini HTTP ${res.status}: ${bodyText.slice(0, 200)}`,
+      };
     }
 
     const json = await res.json();
