@@ -5,6 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 const PUBLIC_PATHS = ["/", "/login", "/auth/callback", "/about", "/faq"];
+const PUBLIC_PREFIXES = ["/api/cron/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
@@ -19,9 +20,11 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  const isPublic = PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith("/_next") || pathname.startsWith("/api/razorpay/webhook")
-  );
+  const isPublic =
+    PUBLIC_PATHS.some((p) => pathname === p) ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/razorpay/webhook") ||
+    PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
 
   // 1. Not logged in -> only public paths allowed, everything else -> /login
   if (!user) {
