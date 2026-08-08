@@ -26,17 +26,19 @@ async function askGeminiAboutCompany(companyName: string): Promise<Discovery> {
     return { company: companyName, platform: "unknown", identifier: null, notes: "No GEMINI_API_KEY set" };
   }
 
-  const prompt = `You are helping identify which Applicant Tracking System (ATS) a company's careers site uses.
+  const prompt = `You are helping identify which Applicant Tracking System (ATS) a company's careers site uses, based on what you already know (you do not have live web access right now).
 
 Company: "${companyName}" (India operations)
 
-Search the web and figure out:
-1. Which ATS platform their public job board runs on: "workday", "greenhouse", "lever", or "unknown" if you can't confirm.
+From your training knowledge, figure out:
+1. Which ATS platform their public job board runs on: "workday", "greenhouse", "lever", or "unknown" if you're not confident.
 2. The exact identifier needed to query it programmatically:
    - For Workday: the FULL careers site URL, e.g. "https://accenture.wd103.myworkdayjobs.com/AccentureCareers"
    - For Greenhouse: just the board token, e.g. "airbnb" (from boards.greenhouse.io/airbnb)
    - For Lever: just the company slug, e.g. "netflix" (from jobs.lever.co/netflix)
    - For unknown: null
+
+If you are not reasonably confident, say "unknown" rather than guessing — a wrong URL is worse than no answer.
 
 Respond with ONLY a single-line JSON object, no markdown, no explanation:
 {"platform":"workday|greenhouse|lever|unknown","identifier":"..." or null,"notes":"short note or null"}`;
@@ -49,7 +51,6 @@ Respond with ONLY a single-line JSON object, no markdown, no explanation:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          tools: [{ google_search: {} }],
           generationConfig: { temperature: 0 },
         }),
       }
@@ -103,7 +104,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Provide { companies: string[] }" }, { status: 400 });
   }
 
-  const batch = companies.slice(0, 8);
+  // Without live search, quota is much higher — safe to process more per call.
+  const batch = companies.slice(0, 20);
 
   const results: Discovery[] = [];
   for (const name of batch) {
