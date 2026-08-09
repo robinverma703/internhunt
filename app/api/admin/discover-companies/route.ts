@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
-import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { COMPANIES_TO_DISCOVER } from "@/lib/company-discovery-list";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-async function assertAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || user.email !== process.env.ADMIN_EMAIL) return null;
-  return user;
+const BATCH_SIZE = 10;
+
+function isAuthorized(request: Request) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  const authHeader = request.headers.get("authorization");
+  if (authHeader === `Bearer ${secret}`) return true;
+  const url = new URL(request.url);
+  return url.searchParams.get("secret") === secret;
 }
 
 type Discovery = {
@@ -91,21 +94,33 @@ Respond with ONLY a single-line JSON object, no markdown, no explanation:
   }
 }
 
-export async function POST(request: Request) {
-  const admin = await assertAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function GET(request: Request) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const companies: string[] = body.companies ?? [];
+  const supabase = createServiceRoleClient();
 
-  if (!Array.isArray(companies) || companies.length === 0) {
-    return NextResponse.json({ error: "Provide { companies: string[] }" }, { status: 400 });
+  const { data: alreadyChecked, error: readError } = await supabase
+    .from("company_sources")
+    .select("company");
+
+  if (readError) {
+    return NextResponse.json({ error: readError.message }, { status: 500 });
   }
 
-  // Without live search, quota is much higher — safe to process more per call.
-  const batch = companies.slice(0, 20);
+  const checkedSet = new Set((alreadyChecked ?? []).map((c) => c.company));
+  const remaining = COMPANIES_TO_DISCOVER.filter((c) => !checkedSet.has(c));
+
+  if (remaining.length === 0) {
+    return NextResponse.json({
+      message: "All companies in the list have been checked already.",
+      totalCompanies: COMPANIES_TO_DISCOVER.length,
+      remaining: 0,
+    });
+  }
+
+  const batch = remaining.slice(0, BATCH_SIZE);
 
   const results: Discovery[] = [];
   for (const name of batch) {
@@ -113,8 +128,7 @@ export async function POST(request: Request) {
     results.push(result);
   }
 
-  const service = createServiceRoleClient();
-  const { error } = await service.from("company_sources").upsert(
+  const { error: writeError } = await supabase.from("company_sources").upsert(
     results.map((r) => ({
       company: r.company,
       platform: r.platform,
@@ -125,35 +139,20 @@ export async function POST(request: Request) {
     { onConflict: "company" }
   );
 
-  if (error) {
-    return NextResponse.json({ error: error.message, results }, { status: 500 });
+  if (writeError) {
+    return NextResponse.json({ error: writeError.message, results }, { status: 500 });
   }
 
   const found = results.filter((r) => r.platform !== "unknown" && r.identifier);
 
   return NextResponse.json({
-    processed: results.length,
-    found: found.length,
-    remaining: companies.length - batch.length,
+    processedThisRun: results.length,
+    foundThisRun: found.length,
+    totalCompanies: COMPANIES_TO_DISCOVER.length,
+    remainingAfterThisRun: remaining.length - batch.length,
     results,
-    message:
-      companies.length > batch.length
-        ? `Done with this batch. ${companies.length - batch.length} companies left — call again with the remaining names.`
-        : "All companies in this list processed.",
+    message: `Checked ${results.length} companies, found ${found.length} usable. ${
+      remaining.length - batch.length
+    } companies still left — will continue automatically tomorrow.`,
   });
-}
-
-export async function GET() {
-  const admin = await assertAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const service = createServiceRoleClient();
-  const { data, error } = await service
-    .from("company_sources")
-    .select("*")
-    .order("checked_at", { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ companies: data });
 }
