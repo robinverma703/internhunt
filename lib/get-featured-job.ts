@@ -13,9 +13,18 @@ export async function getFeaturedJob(): Promise<Job | null> {
 
   if (!jobs || jobs.length === 0) return null;
 
-  const featured = jobs.reduce((best, current) =>
-    getStipendValue(current.stipend) > getStipendValue(best.stipend) ? current : best
+  // Rank by stipend (highest first), then take the top few and rotate
+  // through them daily, so the same listing doesn't get stuck forever
+  // just because nothing has topped it yet.
+  const ranked = [...jobs].sort(
+    (a, b) => getStipendValue(b.stipend) - getStipendValue(a.stipend)
   );
+  const topPool = ranked.slice(0, Math.min(5, ranked.length));
 
-  return featured as Job;
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  const index = dayOfYear % topPool.length;
+
+  return topPool[index] as Job;
 }
