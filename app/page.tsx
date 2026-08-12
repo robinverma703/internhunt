@@ -7,6 +7,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Filter, ShieldCheck, Zap } from "lucide-react";
 import FeaturedInternship from "@/components/featured-internship";
 import { getFeaturedJob } from "@/lib/get-featured-job";
+import { createClient } from "@/lib/supabase/server";
+
+const FAQ_PREVIEW = [
+  {
+    q: "Who can use InternHunt?",
+    a: "It is specifically designed to help students discover and apply for relevant internships easily.",
+  },
+  {
+    q: "Are the internship listings verified?",
+    a: "Yes, we try our best to ensure the listings are authentic so students don't waste time on spam.",
+  },
+  {
+    q: "Is there any fee to apply?",
+    a: "No, browsing and applying for internships through this platform is completely free.",
+  },
+];
 
 const VALUE_PROPS = [
   {
@@ -29,12 +45,35 @@ const VALUE_PROPS = [
 export default async function LandingPage() {
   const featuredJob = await getFeaturedJob();
 
+  const supabase = await createClient();
+  const { data: allJobs } = await supabase.from("jobs").select("company");
+  const totalListings = allJobs?.length ?? 0;
+  const totalCompanies = new Set((allJobs ?? []).map((j) => j.company)).size;
+
   return (
     <main className="min-h-screen bg-paper">
       <Navbar />
       <Hero />
 
       {featuredJob && <FeaturedInternship job={featuredJob} />}
+
+      <section className="mx-auto max-w-6xl px-6 py-14">
+        <div className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-surface px-6 py-10 sm:grid-cols-4">
+          {[
+            { label: "Live listings", value: `${totalListings}+` },
+            { label: "Companies", value: `${totalCompanies}+` },
+            { label: "Cost to students", value: "₹0" },
+            { label: "New jobs added", value: "Daily" },
+          ].map((stat) => (
+            <div key={stat.label} className="text-center">
+              <div className="font-display text-2xl font-semibold text-graphite md:text-3xl">
+                {stat.value}
+              </div>
+              <div className="mt-1 text-xs text-muted md:text-sm">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="text-2xl font-semibold tracking-tight text-graphite md:text-3xl">
@@ -83,6 +122,25 @@ export default async function LandingPage() {
             </Link>
           </CardContent>
         </Card>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-6 py-20">
+        <h2 className="text-center text-2xl font-semibold tracking-tight text-graphite md:text-3xl">
+          Frequently asked questions
+        </h2>
+        <div className="mt-10 divide-y divide-line rounded-2xl border border-line bg-surface">
+          {FAQ_PREVIEW.map((item) => (
+            <div key={item.q} className="px-6 py-6">
+              <h3 className="font-medium text-graphite">{item.q}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{item.a}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 text-center">
+          <Link href="/faq" data-cursor-hover className="text-sm font-medium text-signal hover:underline">
+            See all FAQs →
+          </Link>
+        </div>
       </section>
 
       <Footer />
