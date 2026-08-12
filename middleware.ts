@@ -5,8 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 const PUBLIC_PATHS = ["/", "/login", "/auth/callback", "/about", "/faq"];
-const PUBLIC_PREFIXES = ["/api/cron/"];
-
+const PUBLIC_PREFIXES = ["/api/cron/", "/api/admin/discover-companies"];
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const { response, user } = await updateSession(request);
