@@ -4,7 +4,7 @@ import Footer from "@/components/footer";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Filter, ShieldCheck, Zap } from "lucide-react";
+import { Briefcase, Building2, IndianRupee, Sparkles, CheckCircle2, Filter, ShieldCheck, Zap } from "lucide-react";
 import FeaturedInternship from "@/components/featured-internship";
 import { getFeaturedJob } from "@/lib/get-featured-job";
 import { createClient } from "@/lib/supabase/server";
@@ -58,18 +58,29 @@ export default async function LandingPage() {
       {featuredJob && <FeaturedInternship job={featuredJob} />}
 
       <section className="mx-auto max-w-6xl px-6 py-14">
-        <div className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-surface px-6 py-10 sm:grid-cols-4">
+        <p className="text-center text-xs font-semibold uppercase tracking-widest text-signal">
+          Trusted by students across India
+        </p>
+        <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-4">
           {[
-            { label: "Live listings", value: `${totalListings}+` },
-            { label: "Companies", value: `${totalCompanies}+` },
-            { label: "Cost to students", value: "₹0" },
-            { label: "New jobs added", value: "Daily" },
+            { icon: Briefcase, label: "Live listings", value: `${totalListings}+`, color: "text-signal", bg: "bg-signal-dim" },
+            { icon: Building2, label: "Companies", value: `${totalCompanies}+`, color: "text-mint", bg: "bg-mint/15" },
+            { icon: IndianRupee, label: "Cost to students", value: "₹0", color: "text-amber-500", bg: "bg-amber-100" },
+            { icon: Sparkles, label: "New jobs added", value: "Daily", color: "text-violet-500", bg: "bg-violet-100" },
           ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="font-display text-2xl font-semibold text-graphite md:text-3xl">
+            <div
+              key={stat.label}
+              className="group relative overflow-hidden rounded-2xl border border-line bg-surface px-5 py-8 text-center shadow-card transition-all hover:-translate-y-1 hover:shadow-card-hover"
+            >
+              <div
+                className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${stat.bg} ${stat.color} transition-transform group-hover:scale-110`}
+              >
+                <stat.icon size={22} />
+              </div>
+              <div className="mt-4 font-display text-3xl font-bold tracking-tight text-graphite md:text-4xl">
                 {stat.value}
               </div>
-              <div className="mt-1 text-xs text-muted md:text-sm">{stat.label}</div>
+              <div className="mt-1 text-xs font-medium text-muted md:text-sm">{stat.label}</div>
             </div>
           ))}
         </div>
