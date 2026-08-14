@@ -25,10 +25,10 @@ function getFreshnessBadge(createdAt: string) {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays <= 0) {
-    return { label: "🟢 Aaj Daali Gayi — FRESH!", bg: "#dcfce7", color: "#16a34a" };
+    return { label: "🟢 Posted Today", bg: "#dcfce7", color: "#16a34a" };
   }
   if (diffDays <= 3) {
-    return { label: `🟡 ${diffDays} Din Purani`, bg: "#fef9c3", color: "#ca8a04" };
+    return { label: `🟡 ${diffDays} ${diffDays === 1 ? "day" : "days"} ago`, bg: "#fef9c3", color: "#ca8a04" };
   }
   return null;
 }
