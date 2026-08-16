@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { notifyNewJobs } from "@/lib/telegram";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -177,8 +178,12 @@ export async function GET(request: Request) {
     .upsert(cleanJobs, { onConflict: "source,source_id", ignoreDuplicates: true })
     .select();
 
-  if (error) {
+ if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (data && data.length > 0) {
+    await notifyNewJobs(data.map((j) => ({ title: j.title, company: j.company })));
   }
 
   return NextResponse.json({
