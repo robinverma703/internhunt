@@ -5,7 +5,7 @@ import { COMPANIES_TO_DISCOVER } from "@/lib/company-discovery-list";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 3;
 
 function isAuthorized(request: Request) {
   const secret = process.env.CRON_SECRET;
