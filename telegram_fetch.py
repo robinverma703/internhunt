@@ -5,6 +5,7 @@ Reads recent messages from a public Telegram channel, asks Gemini to
 extract any job/internship postings from each message, and saves
 structured results into the same `job_staging` table used by the
 rest of the pipeline (so they show up in the admin review queue).
+Also sends a Telegram notification when new jobs are found.
 """
 
 import os
@@ -23,6 +24,9 @@ TELEGRAM_API_ID = int(os.environ["TELEGRAM_API_ID"])
 TELEGRAM_API_HASH = os.environ["TELEGRAM_API_HASH"]
 TELEGRAM_SESSION_STRING = os.environ["TELEGRAM_SESSION_STRING"]
 SOURCE_CHANNEL = os.environ.get("TELEGRAM_SOURCE_CHANNEL", "@jobs_and_internships_updates")
+
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 MESSAGES_PER_RUN = 20
 REQUEST_TIMEOUT = 15
@@ -137,6 +141,27 @@ def save_to_supabase(jobs: list):
         return []
 
 
+def notify_telegram(jobs: list):
+    if not jobs or not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+
+    lines = [f"🟢 InternHunt: {len(jobs)} new job(s) from Telegram channel"]
+    lines.append("")
+    for j in jobs[:10]:
+        lines.append(f"• {j['title']} — {j['company']}")
+    if len(jobs) > 10:
+        lines.append(f"...and {len(jobs) - 10} more")
+    lines.append("")
+    lines.append("Check the admin panel to approve/reject.")
+    text = "\n".join(lines)
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    try:
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": text}, timeout=10)
+    except Exception as e:
+        print(f"  [telegram notify error] {e}")
+
+
 def main():
     print(f"Connecting to Telegram, reading last {MESSAGES_PER_RUN} messages from {SOURCE_CHANNEL}...")
 
@@ -163,6 +188,11 @@ def main():
 
     newly_inserted = save_to_supabase(all_jobs)
     print(f"Newly inserted into job_staging: {len(newly_inserted)}")
+
+    if newly_inserted:
+        notify_telegram(newly_inserted)
+        print("Telegram notification sent.")
+
     print("Done.")
 
 
