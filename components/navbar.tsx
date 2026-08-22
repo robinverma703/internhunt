@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 const LINKS = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
+  { label: "Post a Job", href: "/post-job" },
 ];
 
 export default function Navbar() {
