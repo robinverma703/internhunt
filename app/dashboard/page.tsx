@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import ResumeUpload from "@/components/resume-upload";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import JobFeed from "@/components/job-feed";
 import ReferralCard from "@/components/referral-card";
 import { Badge } from "@/components/ui/badge";
@@ -21,9 +22,10 @@ export default async function DashboardPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  const { data: profile } = await supabase
+  const serviceClient = createServiceRoleClient();
+    const { data: profile, error: profileError } = await serviceClient
     .from("users")
-    .select("referral_code, referral_earnings, phone")
+    .select("referral_code, referral_earnings, phone, resume_filename, resume_skills, resume_summary")
     .eq("id", user?.id ?? "")
     .single();
 
@@ -39,6 +41,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-paper">
+      
       {!profile?.phone && <PhoneGate />}
       <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -62,6 +65,13 @@ export default async function DashboardPage() {
           </p>
         </div>
 
+        <ResumeUpload
+          initialFilename={profile?.resume_filename}
+          initialSkills={profile?.resume_skills ?? []}
+          initialSummary={profile?.resume_summary}
+          jobs={jobs ?? []}
+        />
+
         {referralLink && (
           <ReferralCard
             referralLink={referralLink}
@@ -70,7 +80,7 @@ export default async function DashboardPage() {
           />
         )}
 
-        <JobFeed jobs={jobs ?? []} />
+        <JobFeed jobs={jobs ?? []} resumeSkills={profile?.resume_skills ?? []} />
       </div>
     </main>
   );

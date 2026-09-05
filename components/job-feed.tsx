@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import JobCard, { type Job } from "@/components/job-card";
+import { calculateMatchScore } from "@/lib/match-score";
 import { cn } from "@/lib/utils";
 
 const INDIAN_CITIES = [
@@ -18,23 +19,28 @@ const INDIAN_CITIES = [
   "Remote",
 ];
 
-export default function JobFeed({ jobs }: { jobs: Job[] }) {
+export default function JobFeed({
+  jobs,
+  resumeSkills = [],
+}: {
+  jobs: Job[];
+  resumeSkills?: string[];
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [city, setCity] = useState<string>("All Cities");
+  const [sortByMatch, setSortByMatch] = useState(resumeSkills.length > 0);
+
+  const hasResume = resumeSkills.length > 0;
 
   const categories = useMemo(
     () => ["All", ...Array.from(new Set(jobs.map((j) => j.category)))],
     [jobs]
   );
 
-  // Only show city chips that actually have at least one job right now,
-  // so the filter row doesn't fill up with cities that return nothing.
   const availableCities = useMemo(() => {
     const present = new Set(
-      jobs
-        .map((j) => j.location?.toLowerCase() ?? "")
-        .filter(Boolean)
+      jobs.map((j) => j.location?.toLowerCase() ?? "").filter(Boolean)
     );
     return [
       "All Cities",
@@ -44,9 +50,21 @@ export default function JobFeed({ jobs }: { jobs: Job[] }) {
     ];
   }, [jobs]);
 
+  const jobsWithScore = useMemo(() => {
+    if (!hasResume) return jobs.map((j) => ({ job: j, score: null as number | null }));
+    return jobs.map((j) => ({
+      job: j,
+      score: calculateMatchScore(resumeSkills, {
+        title: j.title,
+        description: j.description,
+        category: j.category,
+      }).score,
+    }));
+  }, [jobs, resumeSkills, hasResume]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return jobs.filter((j) => {
+    let result = jobsWithScore.filter(({ job: j }) => {
       const matchesCategory = category === "All" || j.category === category;
       const matchesCity =
         city === "All Cities" ||
@@ -58,7 +76,13 @@ export default function JobFeed({ jobs }: { jobs: Job[] }) {
         (j.location ?? "").toLowerCase().includes(q);
       return matchesCategory && matchesCity && matchesQuery;
     });
-  }, [jobs, query, category, city]);
+
+    if (hasResume && sortByMatch) {
+      result = [...result].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    }
+
+    return result;
+  }, [jobsWithScore, query, category, city, sortByMatch, hasResume]);
 
   return (
     <div>
@@ -117,16 +141,34 @@ export default function JobFeed({ jobs }: { jobs: Job[] }) {
         </div>
       )}
 
-      <p className="mt-4 text-sm text-muted">
-        {filtered.length} {filtered.length === 1 ? "listing" : "listings"}
-      </p>
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-muted">
+          {filtered.length} {filtered.length === 1 ? "listing" : "listings"}
+        </p>
+
+        {hasResume && (
+          <button
+            data-cursor-hover
+            onClick={() => setSortByMatch((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              sortByMatch
+                ? "bg-signal text-white"
+                : "border border-line text-muted hover:border-signal/60"
+            )}
+          >
+            <Sparkles size={12} />
+            Best Matches First
+          </button>
+        )}
+      </div>
 
       <motion.div
         layout
         className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <AnimatePresence mode="popLayout">
-          {filtered.map((job) => (
+          {filtered.map(({ job, score }) => (
             <motion.div
               key={job.id}
               layout
@@ -135,7 +177,7 @@ export default function JobFeed({ jobs }: { jobs: Job[] }) {
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: 0.25 }}
             >
-              <JobCard job={job} />
+              <JobCard job={job} matchScore={score} />
             </motion.div>
           ))}
         </AnimatePresence>

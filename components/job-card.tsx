@@ -97,7 +97,17 @@ function VibeBadge({ tag }: { tag: VibeTag }) {
   );
 }
 
-export default function JobCard({ job }: { job: Job }) {
+function MatchBadge({ score }: { score: number }) {
+  const variant = score >= 70 ? "mint" : score >= 40 ? "default" : "outline";
+  const emoji = score >= 70 ? "🔥" : score >= 40 ? "✨" : "";
+  return (
+    <Badge variant={variant} className="shrink-0">
+      {emoji} {score}% Match
+    </Badge>
+  );
+}
+
+export default function JobCard({ job, matchScore = null }: { job: Job; matchScore?: number | null }) {
   const [open, setOpen] = useState(false);
   const freshness = getFreshnessBadge(job.created_at);
   const vibeTags = getVibeTags(job);
@@ -126,6 +136,12 @@ export default function JobCard({ job }: { job: Job }) {
               </div>
               <Badge variant="outline">{job.category}</Badge>
             </div>
+
+            {matchScore !== null && (
+              <div>
+                <MatchBadge score={matchScore} />
+              </div>
+            )}
 
             {job.location && (
               <span className="flex items-center gap-1 text-xs text-muted">
@@ -240,6 +256,7 @@ export default function JobCard({ job }: { job: Job }) {
 
               <div className="mt-4 flex items-center gap-3 flex-wrap">
                 <Badge variant="outline">{job.category}</Badge>
+                {matchScore !== null && <MatchBadge score={matchScore} />}
                 {job.location && (
                   <span className="flex items-center gap-1 text-sm text-muted">
                     <MapPin size={13} />
