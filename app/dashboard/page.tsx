@@ -7,8 +7,28 @@ import JobFeed from "@/components/job-feed";
 import ReferralCard from "@/components/referral-card";
 import { Badge } from "@/components/ui/badge";
 import PhoneGate from "@/components/phone-gate";
+import SavedSearchesPanel, { type SavedSearchWithCount } from "@/components/saved-searches-panel";
 
+type JobRow = {
+  id: string;
+  title: string;
+  company: string;
+  description: string;
+  category: string;
+  location?: string | null;
+  created_at: string;
+};
 
+function matchesSearch(job: JobRow, search: { keywords: string | null; category: string | null; city: string | null }) {
+  if (search.category && job.category !== search.category) return false;
+  if (search.city && !(job.location ?? "").toLowerCase().includes(search.city.toLowerCase())) return false;
+  if (search.keywords) {
+    const q = search.keywords.toLowerCase();
+    const haystack = `${job.title} ${job.company} ${job.description}`.toLowerCase();
+    if (!haystack.includes(q)) return false;
+  }
+  return true;
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -28,6 +48,27 @@ export default async function DashboardPage() {
     .select("referral_code, referral_earnings, phone, resume_filename, resume_skills, resume_summary")
     .eq("id", user?.id ?? "")
     .single();
+
+  const { data: savedSearchesRaw, error: savedSearchError } = await serviceClient
+    .from("saved_searches")
+    .select("id, keywords, category, city, last_seen_at")
+    .eq("user_id", user?.id ?? "")
+    .order("created_at", { ascending: false });
+
+  console.log("SAVED SEARCHES DEBUG:", savedSearchesRaw, savedSearchError);
+
+  const savedSearches: SavedSearchWithCount[] = (savedSearchesRaw ?? []).map((s) => {
+    const newCount = (jobs ?? []).filter(
+      (j) => new Date(j.created_at) > new Date(s.last_seen_at) && matchesSearch(j as JobRow, s)
+    ).length;
+    return {
+      id: s.id,
+      keywords: s.keywords,
+      category: s.category,
+      city: s.city,
+      newCount,
+    };
+  });
 
   const { count: referralCount } = await supabase
     .from("referrals")
@@ -71,6 +112,8 @@ export default async function DashboardPage() {
           initialSummary={profile?.resume_summary}
           jobs={jobs ?? []}
         />
+
+        <SavedSearchesPanel searches={savedSearches} />
 
         {referralLink && (
           <ReferralCard

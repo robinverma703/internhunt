@@ -23,6 +23,7 @@ export default function AdminStagingReview() {
   const [loading, setLoading] = useState(true);
   const [actingId, setActingId] = useState<string | null>(null);
   const [rejectingAll, setRejectingAll] = useState(false);
+  const [approvingAll, setApprovingAll] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -76,6 +77,26 @@ export default function AdminStagingReview() {
     }
   }
 
+  async function approveAll() {
+    if (!confirm(`Approve all ${jobs.length} pending jobs? They will go live immediately.`)) {
+      return;
+    }
+    setApprovingAll(true);
+    try {
+      const res = await fetch("/api/admin/staging", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_all" }),
+      });
+      if (res.ok) {
+        setJobs([]);
+        router.refresh();
+      }
+    } finally {
+      setApprovingAll(false);
+    }
+  }
+
   return (
     <div style={{ border: "1px solid #333", borderRadius: 12, padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -90,8 +111,17 @@ export default function AdminStagingReview() {
         <div style={{ display: "flex", gap: 12 }}>
           {jobs.length > 0 && (
             <button
+              onClick={approveAll}
+              disabled={approvingAll || rejectingAll}
+              style={{ fontSize: 12, color: "green" }}
+            >
+              {approvingAll ? "Approving..." : "Approve All"}
+            </button>
+          )}
+          {jobs.length > 0 && (
+            <button
               onClick={rejectAll}
-              disabled={rejectingAll}
+              disabled={rejectingAll || approvingAll}
               style={{ fontSize: 12, color: "red" }}
             >
               {rejectingAll ? "Rejecting..." : "Reject All"}

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import JobCard, { type Job } from "@/components/job-card";
 import { calculateMatchScore } from "@/lib/match-score";
 import { cn } from "@/lib/utils";
+import SaveSearchButton from "@/components/save-search-button";
 
 const INDIAN_CITIES = [
   "Bangalore", "Bengaluru", "Mumbai", "Delhi", "Gurgaon", "Gurugram", "Noida",
@@ -96,7 +97,7 @@ export default function JobFeed({
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {categories.map((c) => (
             <button
               key={c}
@@ -115,6 +116,7 @@ export default function JobFeed({
               </Badge>
             </button>
           ))}
+          <SaveSearchButton keywords={query} category={category} city={city} />
         </div>
       </div>
 

@@ -54,6 +54,48 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
+  if (body.action === "approve_all") {
+    const { data: pending, error: fetchAllError } = await service
+      .from("job_staging")
+      .select("*")
+      .eq("status", "pending");
+
+    if (fetchAllError) {
+      return NextResponse.json({ error: fetchAllError.message }, { status: 500 });
+    }
+
+    if (!pending || pending.length === 0) {
+      return NextResponse.json({ success: true, approved: 0 });
+    }
+
+    const { error: insertAllError } = await service.from("jobs").insert(
+      pending.map((staged) => ({
+        title: staged.title,
+        company: staged.company,
+        description: staged.description,
+        stipend: staged.stipend,
+        link: staged.link,
+        category: staged.category,
+        location: staged.location ?? null,
+      }))
+    );
+
+    if (insertAllError) {
+      return NextResponse.json({ error: insertAllError.message }, { status: 500 });
+    }
+
+    const { error: updateAllError } = await service
+      .from("job_staging")
+      .update({ status: "approved", reviewed_at: new Date().toISOString() })
+      .eq("status", "pending");
+
+    if (updateAllError) {
+      return NextResponse.json({ error: updateAllError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, approved: pending.length });
+  }
+
   const { id, action } = body;
   if (!id || !["approve", "reject"].includes(action)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
