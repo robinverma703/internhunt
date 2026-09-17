@@ -47,15 +47,31 @@ REQUEST_TIMEOUT = 15
 SLEEP_BETWEEN_CALLS = 1.0
 
 
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+
 def duckduckgo_search(query: str, num: int = RESULTS_PER_QUERY):
-    """Runs one DuckDuckGo search — free, no API key or card needed."""
-    url = "https://html.duckduckgo.com/html/"
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; InternHuntBot/1.0)"}
+    """Tries DuckDuckGo's lite endpoint first, then falls back to Bing if blocked."""
+    links = _duckduckgo_lite(query, num)
+    if links:
+        return links
+    print(f"  [ddg empty] falling back to Bing for: '{query}'")
+    return _bing_search(query, num)
+
+
+def _duckduckgo_lite(query: str, num: int):
+    url = "https://lite.duckduckgo.com/lite/"
+    headers = {"User-Agent": BROWSER_UA}
     try:
         res = requests.post(url, data={"q": query}, headers=headers, timeout=REQUEST_TIMEOUT)
         if not res.ok:
             return []
-        raw_links = re.findall(r'class="result__a"[^>]*href="([^"]+)"', res.text)
+        raw_links = re.findall(r'<a[^>]+class="result-link"[^>]+href="([^"]+)"', res.text)
+        if not raw_links:
+            raw_links = re.findall(r'class="result__a"[^>]*href="([^"]+)"', res.text)
         links = []
         for link in raw_links[:num]:
             match = re.search(r"uddg=([^&]+)", link)
@@ -65,7 +81,21 @@ def duckduckgo_search(query: str, num: int = RESULTS_PER_QUERY):
                 links.append(link)
         return links
     except Exception as e:
-        print(f"  [search error] '{query}': {e}")
+        print(f"  [ddg error] '{query}': {e}")
+        return []
+
+
+def _bing_search(query: str, num: int):
+    url = "https://www.bing.com/search"
+    headers = {"User-Agent": BROWSER_UA}
+    try:
+        res = requests.get(url, params={"q": query}, headers=headers, timeout=REQUEST_TIMEOUT)
+        if not res.ok:
+            return []
+        raw_links = re.findall(r'<li class="b_algo"[\s\S]*?<a href="([^"]+)"', res.text)
+        return raw_links[:num]
+    except Exception as e:
+        print(f"  [bing error] '{query}': {e}")
         return []
 
 
