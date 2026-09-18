@@ -126,6 +126,91 @@ def fetch_from_unstop():
 
 
 # ============================================================
+# Devpost — another public JSON API (mostly global/online hackathons)
+# ============================================================
+
+DEVPOST_MONTHS = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def parse_devpost_date_range(text: str):
+    tokens = re.findall(r"([A-Za-z]{3})[a-z]*\s+(\d{1,2})(?:,\s*(\d{4}))?", text or "")
+    if not tokens:
+        return None, None
+    last_year = None
+    for _, _, yr in reversed(tokens):
+        if yr:
+            last_year = yr
+            break
+    dates = []
+    for mon, day, yr in tokens:
+        y = yr or last_year
+        m = DEVPOST_MONTHS.get(mon.lower()[:3])
+        if not m or not y:
+            continue
+        dates.append(f"{y}-{m:02d}-{int(day):02d}")
+    if not dates:
+        return None, None
+    return dates[0], dates[-1]
+
+
+def fetch_from_devpost():
+    results = []
+    url = "https://devpost.com/api/hackathons"
+    headers = {"User-Agent": BROWSER_UA, "Accept": "application/json"}
+    for page in range(1, 4):
+        params = {"status[]": "open", "per_page": 50, "page": page}
+        try:
+            res = requests.get(url, params=params, headers=headers, timeout=REQUEST_TIMEOUT)
+            if not res.ok:
+                break
+            payload = res.json()
+            items = payload.get("hackathons") or []
+            if not items:
+                break
+        except Exception as e:
+            print(f"  [devpost error] {e}")
+            break
+
+        for item in items:
+            title = (item.get("title") or "").strip()
+            if not title:
+                continue
+
+            loc_info = item.get("displayed_location") or {}
+            location_text = loc_info.get("location")
+            mode = "Online" if (location_text or "").lower() == "online" else "Offline"
+            city = None if mode == "Online" else location_text
+
+            start_date, end_date = parse_devpost_date_range(item.get("submission_period_dates") or "")
+
+            prize_raw = item.get("prize_amount") or ""
+            prize_clean = re.sub(r"<[^>]+>", "", prize_raw).strip()
+            prize = prize_clean if prize_clean and prize_clean not in ("$0", "\u20b90", "\u20ac0") else None
+
+            results.append(
+                {
+                    "title": title,
+                    "organizer": (item.get("organization_name") or "Devpost").strip() or "Devpost",
+                    "mode": mode,
+                    "location": city,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "registration_deadline": end_date,
+                    "prize": prize,
+                    "link": item.get("url") or "https://devpost.com/hackathons",
+                    "source": "devpost",
+                    "source_id": str(item.get("id")),
+                }
+            )
+        time.sleep(SLEEP_BETWEEN_CALLS)
+
+    print(f"  [devpost] fetched {len(results)} items from the API")
+    return results
+
+# ============================================================
 # SECONDARY SOURCE — web search + Gemini extraction
 # (kept as a bonus layer; DuckDuckGo/Bing may be blocked from
 # some CI environments, so this can legitimately return little)
@@ -427,17 +512,54 @@ def notify_telegram(new_hackathons: list):
 # ============================================================
 
 CORPORATE_HACKATHON_COMPANIES = [
+    # Big Tech
     "Flipkart", "Microsoft India", "Google India", "Amazon India",
-    "Adobe India", "Walmart Global Tech", "Swiggy", "Zomato", "Paytm",
-    "PhonePe", "Razorpay", "CRED", "Meesho", "Groww", "Zerodha",
+    "Adobe India", "Walmart Global Tech", "Meta India", "Apple India",
+    "LinkedIn India", "Uber India", "Ola", "Twitter India", "Atlassian India",
+    "GitHub", "GitLab", "Nvidia India", "Qualcomm India", "Samsung R&D India",
+    "Intel India", "AMD India", "ARM India", "VMware India",
+    # Fintech / Payments
+    "Swiggy", "Zomato", "Paytm", "PhonePe", "Razorpay", "CRED", "Groww",
+    "Zerodha", "Upstox", "Cashfree", "BharatPe", "Slice", "Jupiter Money",
+    "Fi Money", "Pine Labs", "Mobikwik", "Freecharge",
+    # Banking / Financial Services
     "Mastercard", "Visa", "American Express", "Goldman Sachs India",
     "JPMorgan Chase India", "Morgan Stanley India", "Wells Fargo India",
+    "Deutsche Bank India", "Barclays India", "HSBC India", "Citi India",
+    "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra Bank",
+    "Bajaj Finserv", "IDFC First Bank",
+    # Enterprise / Cloud / SaaS
     "IBM India", "Intuit India", "Salesforce India", "Oracle India",
     "SAP Labs India", "Dell Technologies India", "Cisco India",
-    "Nvidia India", "Qualcomm India", "Samsung R&D India",
+    "ServiceNow India", "Workday India", "Zoho", "Freshworks",
+    "Postman", "BrowserStack", "Chargebee", "Druva", "Icertis",
+    "Darwinbox", "Whatfix", "Clevertap", "MoEngage", "Innovaccer",
+    # IT Services
     "Tata Consultancy Services", "Infosys", "Wipro", "HCLTech",
-    "Tech Mahindra", "LTIMindtree", "Ola", "Uber India",
+    "Tech Mahindra", "LTIMindtree", "Mphasis", "Persistent Systems",
+    "Cognizant India", "Capgemini India", "Accenture India",
+    # E-commerce / Retail / Food
+    "Myntra", "Nykaa", "BigBasket", "Blinkit", "Zepto", "Urban Company",
+    "Lenskart", "Udaan", "Meesho", "Snapdeal", "Shopify India",
+    # EdTech
+    "BYJU'S", "Unacademy", "Vedantu", "PhysicsWallah", "upGrad",
+    "Simplilearn", "Coding Ninjas", "Scaler",
+    # HealthTech
+    "Practo", "PharmEasy", "1mg", "Apollo 24/7", "Cure.fit",
+    # Telecom / Auto
+    "Jio Platforms", "Airtel", "Vodafone Idea", "Tata Motors",
+    "Mahindra & Mahindra", "Bajaj Auto", "Ather Energy", "Ola Electric",
+    # Gaming / Media / Entertainment
+    "Dream11", "MPL", "Games24x7", "Hotstar", "Jio Cinema", "Spotify India",
+    # Web3 / Blockchain / Crypto
+    "Polygon", "CoinDCX", "WazirX", "CoinSwitch",
+    # Global tech hubs in India (extra chance of hackathons)
+    "Walmart Labs India", "Target India", "Goldman Sachs Engineering",
+    "Expedia Group India", "Booking.com India", "PayPal India",
+    "Stripe India", "Coinbase India", "Databricks India", "Snowflake India",
+    "MongoDB India", "Elastic India", "HashiCorp India", "Confluent India",
 ]
+
 
 
 def guess_company_hackathon_url(company: str):
@@ -486,6 +608,7 @@ def main():
 
     print("Fetching from Unstop (primary source)...")
     unstop_hackathons = fetch_from_unstop()
+
 
     print("Fetching via web search (secondary/bonus source)...")
     search_hackathons = fetch_from_web_search()
