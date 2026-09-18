@@ -408,7 +408,66 @@ def notify_telegram(new_hackathons: list):
     except Exception as e:
         print(f"  [telegram error] {e}")
 
+# ============================================================
+# THIRD SOURCE — direct company career/hackathon pages
+# (AI-guessed, same pattern as the internship discovery agent)
+# ============================================================
 
+CORPORATE_HACKATHON_COMPANIES = [
+    "Flipkart", "Microsoft India", "Google India", "Amazon India",
+    "Adobe India", "Walmart Global Tech", "Swiggy", "Zomato", "Paytm",
+    "PhonePe", "Razorpay", "CRED", "Meesho", "Groww", "Zerodha",
+    "Mastercard", "Visa", "American Express", "Goldman Sachs India",
+    "JPMorgan Chase India", "Morgan Stanley India", "Wells Fargo India",
+    "IBM India", "Intuit India", "Salesforce India", "Oracle India",
+    "SAP Labs India", "Dell Technologies India", "Cisco India",
+    "Nvidia India", "Qualcomm India", "Samsung R&D India",
+    "Tata Consultancy Services", "Infosys", "Wipro", "HCLTech",
+    "Tech Mahindra", "LTIMindtree", "Ola", "Uber India",
+]
+
+
+def guess_company_hackathon_url(company: str):
+    prompt = (
+        f"Does {company} currently run a public hackathon, coding challenge, "
+        f"or student developer competition? If yes, give ONLY the direct URL "
+        f"to that hackathon/competition page. If they don't run one right now, "
+        f"reply with exactly: NONE\n"
+        f"Reply with nothing except the URL or NONE \u2014 no explanation."
+    )
+    text = call_gemini(prompt)
+    if not text:
+        return None
+    text = text.strip().split()[0] if text.strip() else ""
+    if not text.startswith("http"):
+        return None
+    return text
+
+
+def fetch_from_company_pages():
+    results = []
+    for company in CORPORATE_HACKATHON_COMPANIES:
+        print(f"  Checking: {company}")
+        url = guess_company_hackathon_url(company)
+        if not url:
+            time.sleep(SLEEP_BETWEEN_CALLS)
+            continue
+
+        page_text = fetch_page_text(url)
+        if not page_text:
+            time.sleep(SLEEP_BETWEEN_CALLS)
+            continue
+
+        extracted = extract_hackathons_from_page(url, page_text)
+        for h in extracted:
+            if not h.get("organizer") or h["organizer"] == "Unknown":
+                h["organizer"] = company
+            h["category"] = "Corporate"
+            h["source"] = "company-site"
+        results.extend(extracted)
+        time.sleep(SLEEP_BETWEEN_CALLS)
+
+    return results
 def main():
     print("Starting hackathon run...")
 
@@ -418,7 +477,10 @@ def main():
     print("Fetching via web search (secondary/bonus source)...")
     search_hackathons = fetch_from_web_search()
 
-    all_hackathons = unstop_hackathons + search_hackathons
+    print("Fetching directly from corporate/company pages (your main focus)...")
+    company_hackathons = fetch_from_company_pages()
+
+    all_hackathons = unstop_hackathons + search_hackathons + company_hackathons
 
     final = []
     for h in all_hackathons:
@@ -438,7 +500,7 @@ def main():
             )
         final.append(h)
 
-    print(f"Total candidate hackathons: {len(final)} (Unstop: {len(unstop_hackathons)}, web-search: {len(search_hackathons)})")
+        print(f"Total candidate hackathons: {len(final)} (Unstop: {len(unstop_hackathons)}, web-search: {len(search_hackathons)}, company-sites: {len(company_hackathons)})")
 
     newly_inserted = save_to_supabase(final)
     print(f"Newly inserted into hackathons_staging: {len(newly_inserted)}")
