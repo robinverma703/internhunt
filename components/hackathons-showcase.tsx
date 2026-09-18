@@ -171,7 +171,92 @@ function useParticles(count: number) {
   return particles;
 }
 
-/** Self-contained ambient pad generator — no audio file needed. */
+/** Self-contained ambient pad generator — no audio
+ const TYPEWRITER_LINES = [
+  "scanning github.com/hackathons...",
+  "priority region: Gurgaon \u2192 Delhi NCR \u2192 India \u2192 Global",
+  "verifying registration links...",
+  "filtering expired listings...",
+  "3 scans daily \u2022 zero manual search",
+];
+
+function useTypewriter(lines: string[]) {
+  const [text, setText] = useState("");
+  useEffect(() => {
+    let lineIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+    let timeout: ReturnType<typeof setTimeout>;
+
+    function tick() {
+      const current = lines[lineIndex];
+      if (!deleting) {
+        charIndex++;
+        setText(current.slice(0, charIndex));
+        if (charIndex === current.length) {
+          deleting = true;
+          timeout = setTimeout(tick, 1800);
+          return;
+        }
+        timeout = setTimeout(tick, 45);
+      } else {
+        charIndex--;
+        setText(current.slice(0, charIndex));
+        if (charIndex === 0) {
+          deleting = false;
+          lineIndex = (lineIndex + 1) % lines.length;
+        }
+        timeout = setTimeout(tick, 20);
+      }
+    }
+    timeout = setTimeout(tick, 400);
+    return () => clearTimeout(timeout);
+  }, [lines]);
+  return text;
+}*  file needed. */
+
+const TYPEWRITER_LINES = [
+  "scanning github.com/hackathons...",
+  "priority region: Gurgaon \u2192 Delhi NCR \u2192 India \u2192 Global",
+  "verifying registration links...",
+  "filtering expired listings...",
+  "3 scans daily \u2022 zero manual search",
+];
+
+function useTypewriter(lines: string[]) {
+  const [text, setText] = useState("");
+  useEffect(() => {
+    let lineIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+    let timeout: ReturnType<typeof setTimeout>;
+
+    function tick() {
+      const current = lines[lineIndex];
+      if (!deleting) {
+        charIndex++;
+        setText(current.slice(0, charIndex));
+        if (charIndex === current.length) {
+          deleting = true;
+          timeout = setTimeout(tick, 1800);
+          return;
+        }
+        timeout = setTimeout(tick, 45);
+      } else {
+        charIndex--;
+        setText(current.slice(0, charIndex));
+        if (charIndex === 0) {
+          deleting = false;
+          lineIndex = (lineIndex + 1) % lines.length;
+        }
+        timeout = setTimeout(tick, 20);
+      }
+    }
+    timeout = setTimeout(tick, 400);
+    return () => clearTimeout(timeout);
+  }, [lines]);
+  return text;
+}
 function useAmbientSound() {
   const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<{ osc: OscillatorNode; gain: GainNode }[]>([]);
@@ -285,6 +370,7 @@ export default function HackathonsShowcase({ hackathons }: { hackathons: Hackath
   const [category, setCategory] = useState<"All" | "College" | "Corporate" | "Open">("All");
   const [query, setQuery] = useState("");
   const { playing, toggle } = useAmbientSound();
+    const typedText = useTypewriter(TYPEWRITER_LINES);
   const particles = useParticles(60);
 
   const filtered = useMemo(() => {
@@ -381,24 +467,42 @@ export default function HackathonsShowcase({ hackathons }: { hackathons: Hackath
         ))}
       </div>
 
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B0A1F]/60 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <a href="/dashboard" className="text-[17px] font-semibold tracking-tight text-white">
+    {/* Top bar */}
+      <header className="sticky top-0 z-40 overflow-hidden border-b border-emerald-400/20 bg-[#05040E]/80 backdrop-blur-xl">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+          style={{ animation: "sweep 4s linear infinite" }}
+        />
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+          <a href="/dashboard" className="flex items-center gap-2 text-[17px] font-semibold tracking-tight text-white">
+            <span className="font-mono text-emerald-400">{"</>"}</span>
             Intern<span className="bg-gradient-to-r from-amber-300 to-yellow-500 bg-clip-text text-transparent">Hunt</span>
           </a>
-          <button
-            onClick={toggle}
-            aria-label={playing ? "Mute ambient sound" : "Play ambient sound"}
-            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition ${
-              playing
-                ? "border-amber-300/50 bg-amber-400/15 text-amber-200"
-                : "border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
-            }`}
-          >
-            {playing ? <Volume2 size={14} className="animate-pulse" /> : <VolumeX size={14} />}
-            {playing ? "Ambience on" : "Play ambience"}
-          </button>
+
+          <div className="hidden flex-1 items-center justify-center font-mono text-[12px] text-emerald-400/80 md:flex">
+            <span className="text-emerald-500/60">$</span>
+            <span className="ml-2">{typedText}</span>
+            <span className="terminal-cursor ml-0.5">\u2588</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 font-mono text-[10px] text-emerald-300 sm:flex">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              LIVE: {hackathons.length}
+            </span>
+            <button
+              onClick={toggle}
+              aria-label={playing ? "Mute ambient sound" : "Play ambient sound"}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition ${
+                playing
+                  ? "border-amber-300/50 bg-amber-400/15 text-amber-200"
+                  : "border-white/15 bg-white/5 text-white/80 hover:bg-white/10"
+              }`}
+            >
+              {playing ? <Volume2 size={14} className="animate-pulse" /> : <VolumeX size={14} />}
+              {playing ? "Ambience on" : "Play ambience"}
+            </button>
+          </div>
         </div>
       </header>
 
