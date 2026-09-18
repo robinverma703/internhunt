@@ -48,7 +48,14 @@ def fetch_from_unstop():
             "orderBy": "",
             "filter_condition": "",
         }
-        headers = {"User-Agent": BROWSER_UA, "Accept": "application/json"}
+        headers = {
+            "User-Agent": BROWSER_UA,
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://unstop.com/hackathons",
+            "Origin": "https://unstop.com",
+        }
+    
         try:
             res = requests.get(url, params=params, headers=headers, timeout=REQUEST_TIMEOUT)
             if not res.ok:
