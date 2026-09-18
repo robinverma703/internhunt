@@ -1,7 +1,10 @@
 """
 InternHunt — Hackathon fetcher.
+Primary source: Unstop's public data API (reliable, structured, no scraping/
+search-engine blocking issues). Secondary: web-search + Gemini extraction,
+kept as a bonus discovery layer for broader/other sources.
 Finds live/upcoming hackathons — Gurgaon/Delhi NCR first, then rest of India,
-then international — and stages them for admin approval, same pattern as fetch_jobs.py.
+then international — and stages them for admin approval.
 """
 
 import os
@@ -17,25 +20,124 @@ SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
+BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+REQUEST_TIMEOUT = 15
+SLEEP_BETWEEN_CALLS = 1.0
+
+# ============================================================
+# PRIMARY SOURCE — Unstop's public data API
+# (no key needed, no login, not blocked like search engines)
+# ============================================================
+
+UNSTOP_PAGES_TO_FETCH = 3  # ~50 hackathons per page
+
+
+def fetch_from_unstop():
+    all_items = []
+    for page in range(1, UNSTOP_PAGES_TO_FETCH + 1):
+        url = "https://unstop.com/api/public/opportunity/search-result"
+        params = {
+            "opportunity": "hackathons",
+            "page": page,
+            "per_page": 50,
+            "sortBy": "",
+            "orderBy": "",
+            "filter_condition": "",
+        }
+        headers = {"User-Agent": BROWSER_UA, "Accept": "application/json"}
+        try:
+            res = requests.get(url, params=params, headers=headers, timeout=REQUEST_TIMEOUT)
+            if not res.ok:
+                print(f"  [unstop error] page {page}: status {res.status_code}")
+                break
+            payload = res.json()
+            items = (payload.get("data") or {}).get("data") or []
+            if not items:
+                break
+            all_items.extend(items)
+        except Exception as e:
+            print(f"  [unstop error] page {page}: {e}")
+            break
+        time.sleep(SLEEP_BETWEEN_CALLS)
+
+    print(f"  [unstop] fetched {len(all_items)} raw items from the API")
+
+    results = []
+    for item in all_items:
+        title = (item.get("title") or "").strip()
+        if not title:
+            continue
+
+        public_url = item.get("public_url")
+        link = f"https://unstop.com/{public_url}" if public_url else "https://unstop.com/hackathons"
+
+        organizer = ((item.get("organisation") or {}).get("name") or "Unstop").strip()
+
+        city = (item.get("address_with_country_logo") or {}).get("city")
+        region = item.get("region")
+        mode = "Offline" if city else ("Online" if region == "online" else "Online")
+
+        reg = item.get("regnRequirements") or {}
+        reg_deadline = reg.get("end_regn_dt")
+        reg_deadline = reg_deadline.split("T")[0] if reg_deadline else None
+
+        end_date = item.get("end_date")
+        end_date = end_date.split("T")[0] if end_date else None
+
+        prize = None
+        prizes = item.get("prizes") or []
+        if prizes:
+            top = prizes[0]
+            cash = top.get("cash")
+            if cash:
+                prize = f"\u20b9{cash:,}"
+            elif top.get("others"):
+                prize = top["others"][:80]
+
+        results.append(
+            {
+                "title": title,
+                "organizer": organizer,
+                "mode": mode,
+                "location": city,
+                "start_date": None,
+                "end_date": end_date,
+                "registration_deadline": reg_deadline,
+                "prize": prize,
+                "link": link,
+                "source": "unstop",
+                "source_id": str(item.get("id")),
+            }
+        )
+
+    return results
+
+
+# ============================================================
+# SECONDARY SOURCE — web search + Gemini extraction
+# (kept as a bonus layer; DuckDuckGo/Bing may be blocked from
+# some CI environments, so this can legitimately return little)
+# ============================================================
+
 SEARCH_QUERIES = [
     # Priority 1 — Gurgaon / Delhi NCR
     "hackathon Gurgaon 2026 register",
     "hackathon Gurugram college 2026",
     "hackathon Delhi NCR 2026 apply",
     "corporate hackathon Gurgaon Delhi 2026",
-    "Unstop hackathon Delhi NCR",
     "Devfolio hackathon Delhi NCR Gurgaon",
     "college hackathon Delhi 2026 register",
     # Priority 2 — rest of India
     "college hackathon India 2026 register",
     "university hackathon India 2026 apply",
     "corporate hackathon India 2026 hiring challenge",
-    "Unstop hackathon India registration open",
     "Devfolio hackathon India registration open",
     "online hackathon India students 2026",
-    "hackathon prize money India college students",
     "national level hackathon India 2026",
-    "student hackathon India free entry 2026",
     # Priority 3 — international
     "international hackathon 2026 open worldwide students register",
     "global online hackathon 2026 students apply",
@@ -43,23 +145,6 @@ SEARCH_QUERIES = [
 
 RESULTS_PER_QUERY = 8
 MAX_PAGE_CHARS = 6000
-REQUEST_TIMEOUT = 15
-SLEEP_BETWEEN_CALLS = 1.0
-
-
-BROWSER_UA = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-)
-
-
-def duckduckgo_search(query: str, num: int = RESULTS_PER_QUERY):
-    """Tries DuckDuckGo's lite endpoint first, then falls back to Bing if blocked."""
-    links = _duckduckgo_lite(query, num)
-    if links:
-        return links
-    print(f"  [ddg empty] falling back to Bing for: '{query}'")
-    return _bing_search(query, num)
 
 
 def _duckduckgo_lite(query: str, num: int):
@@ -99,6 +184,13 @@ def _bing_search(query: str, num: int):
         return []
 
 
+def web_search(query: str, num: int = RESULTS_PER_QUERY):
+    links = _duckduckgo_lite(query, num)
+    if links:
+        return links
+    return _bing_search(query, num)
+
+
 def strip_html(html: str) -> str:
     html = re.sub(r"<script[\s\S]*?</script>", " ", html, flags=re.IGNORECASE)
     html = re.sub(r"<style[\s\S]*?</style>", " ", html, flags=re.IGNORECASE)
@@ -109,7 +201,7 @@ def strip_html(html: str) -> str:
 
 def fetch_page_text(url: str):
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; InternHuntBot/1.0)"}
+        headers = {"User-Agent": BROWSER_UA}
         res = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
         if not res.ok:
             return None
@@ -152,7 +244,7 @@ def extract_hackathons_from_page(source_url: str, page_text: str):
         "- start_date (YYYY-MM-DD, or null if not visible)\n"
         "- end_date (YYYY-MM-DD, or null if not visible)\n"
         "- registration_deadline (YYYY-MM-DD, or null if not visible)\n"
-        "- prize (short text like \"₹50,000\" or \"Certificates + Swag\", or null)\n"
+        "- prize (short text like \"\u20b950,000\" or \"Certificates + Swag\", or null)\n"
         "- link (direct registration/details link if visible, else null)\n\n"
         'Respond with ONLY a JSON array, no markdown, no explanation:\n'
         '[{"title":"...","organizer":"...","mode":"Online","location":null,'
@@ -188,11 +280,40 @@ def extract_hackathons_from_page(source_url: str, page_text: str):
                     "registration_deadline": h.get("registration_deadline") or None,
                     "prize": h.get("prize") or None,
                     "link": h.get("link") or source_url,
+                    "source": "web-search",
+                    "source_id": None,
                 }
             )
         return cleaned
     except Exception:
         return []
+
+
+def fetch_from_web_search():
+    all_candidate_urls = set()
+    for query in SEARCH_QUERIES:
+        print(f"  Searching: {query}")
+        urls = web_search(query)
+        all_candidate_urls.update(urls)
+        time.sleep(SLEEP_BETWEEN_CALLS)
+
+    print(f"  [web-search] found {len(all_candidate_urls)} unique pages to check")
+
+    results = []
+    for url in all_candidate_urls:
+        page_text = fetch_page_text(url)
+        if not page_text:
+            continue
+        extracted = extract_hackathons_from_page(url, page_text)
+        results.extend(extracted)
+        time.sleep(SLEEP_BETWEEN_CALLS)
+
+    return results
+
+
+# ============================================================
+# Shared helpers
+# ============================================================
 
 
 def guess_category(organizer: str, title: str) -> str:
@@ -214,7 +335,7 @@ def guess_category(organizer: str, title: str) -> str:
 
 
 HARD_REJECT_PATTERNS = [
-    r"registration\s*fee\s*\u20b9?\s*[5-9]\d{3,}",  # only reject if fee looks unreasonably high
+    r"registration\s*fee\s*\u20b9?\s*[5-9]\d{3,}",
     r"pay\s*(a\s*)?deposit",
     r"whatsapp\s*only",
 ]
@@ -244,9 +365,7 @@ def save_to_supabase(hackathons: list):
     params = {"on_conflict": "source,source_id"}
 
     try:
-        res = requests.post(
-            url, headers=headers, params=params, json=hackathons, timeout=30
-        )
+        res = requests.post(url, headers=headers, params=params, json=hackathons, timeout=30)
         if not res.ok:
             print(f"  [supabase error] {res.status_code}: {res.text[:300]}")
             return []
@@ -260,12 +379,10 @@ def notify_telegram(new_hackathons: list):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID or not new_hackathons:
         return
 
-    preview = "\n".join(
-        f"• {h['title']} — {h['organizer']}" for h in new_hackathons[:5]
-    )
+    preview = "\n".join(f"\u2022 {h['title']} \u2014 {h['organizer']}" for h in new_hackathons[:5])
     more = f"\n...and {len(new_hackathons) - 5} more" if len(new_hackathons) > 5 else ""
     text = (
-        f"🟠 InternHunt: {len(new_hackathons)} new hackathon"
+        f"\U0001f7e0 InternHunt: {len(new_hackathons)} new hackathon"
         f"{'s' if len(new_hackathons) > 1 else ''} waiting for approval\n\n"
         f"{preview}{more}\n\nCheck the admin panel to approve/reject."
     )
@@ -280,39 +397,37 @@ def notify_telegram(new_hackathons: list):
 
 
 def main():
-    print(f"Starting hackathon run with {len(SEARCH_QUERIES)} search queries...")
+    print("Starting hackathon run...")
 
-    all_candidate_urls = set()
-    for query in SEARCH_QUERIES:
-        print(f"Searching: {query}")
-        urls = duckduckgo_search(query)
-        all_candidate_urls.update(urls)
-        time.sleep(SLEEP_BETWEEN_CALLS)
+    print("Fetching from Unstop (primary source)...")
+    unstop_hackathons = fetch_from_unstop()
 
-    print(f"Found {len(all_candidate_urls)} unique pages to check.")
+    print("Fetching via web search (secondary/bonus source)...")
+    search_hackathons = fetch_from_web_search()
 
-    all_hackathons = []
-    for url in all_candidate_urls:
-        page_text = fetch_page_text(url)
-        if not page_text:
+    all_hackathons = unstop_hackathons + search_hackathons
+
+    final = []
+    for h in all_hackathons:
+        if is_probably_scam(h):
             continue
-
-        extracted = extract_hackathons_from_page(url, page_text)
-        for h in extracted:
-            if is_probably_scam(h):
-                continue
-            h["description"] = f"Found via web search at {url}. Verify details before approving."
+        if "description" not in h:
+            h["description"] = f"Sourced from {h['source']}. Verify details before approving."
+        if "category" not in h or not h.get("category"):
             h["category"] = guess_category(h["organizer"], h["title"])
-            h["source"] = "web-search"
+        if not h.get("source_id"):
             h["source_id"] = make_source_id(h)
-            h["flags"] = ["Auto-discovered via internet search — verify carefully before approving"]
-            all_hackathons.append(h)
+        if "flags" not in h:
+            h["flags"] = (
+                ["Sourced directly from Unstop's public listings"]
+                if h["source"] == "unstop"
+                else ["Auto-discovered via internet search — verify carefully before approving"]
+            )
+        final.append(h)
 
-        time.sleep(SLEEP_BETWEEN_CALLS)
+    print(f"Total candidate hackathons: {len(final)} (Unstop: {len(unstop_hackathons)}, web-search: {len(search_hackathons)})")
 
-    print(f"Extracted {len(all_hackathons)} candidate hackathons total.")
-
-    newly_inserted = save_to_supabase(all_hackathons)
+    newly_inserted = save_to_supabase(final)
     print(f"Newly inserted into hackathons_staging: {len(newly_inserted)}")
 
     if newly_inserted:
