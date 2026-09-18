@@ -101,9 +101,15 @@ def fetch_from_unstop():
             top = prizes[0]
             cash = top.get("cash")
             if cash:
-                prize = f"\u20b9{cash:,}"
+                prize = f"₹{cash:,}"
             elif top.get("others"):
                 prize = top["others"][:80]
+
+        # Skip anything not currently LIVE, or whose registration already closed
+        if item.get("status") != "LIVE":
+            continue
+        if reg_deadline and reg_deadline < time.strftime("%Y-%m-%d"):
+            continue
 
         results.append(
             {
