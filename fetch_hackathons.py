@@ -105,10 +105,7 @@ def fetch_from_unstop():
             elif top.get("others"):
                 prize = top["others"][:80]
 
-                # Skip only if registration has genuinely already closed
-        if reg_deadline and reg_deadline < time.strftime("%Y-%m-%d"):
-            continue
-
+        
         results.append(
             {
                 "title": title,
@@ -385,6 +382,24 @@ def save_to_supabase(hackathons: list):
         print(f"  [supabase error] {e}")
         return []
 
+def cleanup_expired_live_hackathons():
+    """Removes hackathons from the LIVE table once registration has closed."""
+    url = f"{SUPABASE_URL}/rest/v1/hackathons"
+    headers = {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+    }
+    today = time.strftime("%Y-%m-%d")
+    params = {"registration_deadline": f"lt.{today}"}
+    try:
+        res = requests.delete(url, headers=headers, params=params, timeout=30)
+        if res.ok:
+            print(f"  [cleanup] removed expired hackathons from live site (before {today})")
+        else:
+            print(f"  [cleanup error] {res.status_code}: {res.text[:200]}")
+    except Exception as e:
+        print(f"  [cleanup error] {e}")
+
 
 def notify_telegram(new_hackathons: list):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID or not new_hackathons:
@@ -507,6 +522,7 @@ def main():
         notify_telegram(newly_inserted)
         print("Telegram notification sent.")
 
+    cleanup_expired_live_hackathons()
     print("Done.")
 
 
