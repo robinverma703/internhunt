@@ -105,9 +105,7 @@ def fetch_from_unstop():
             elif top.get("others"):
                 prize = top["others"][:80]
 
-        # Skip anything not currently LIVE, or whose registration already closed
-        if item.get("status") != "LIVE":
-            continue
+                # Skip only if registration has genuinely already closed
         if reg_deadline and reg_deadline < time.strftime("%Y-%m-%d"):
             continue
 
