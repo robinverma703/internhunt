@@ -613,10 +613,13 @@ def main():
     print("Fetching via web search (secondary/bonus source)...")
     search_hackathons = fetch_from_web_search()
 
+    print("Fetching from Devpost (mostly global/online hackathons)...")
+    devpost_hackathons = fetch_from_devpost()
+
     print("Fetching directly from corporate/company pages (your main focus)...")
     company_hackathons = fetch_from_company_pages()
 
-    all_hackathons = unstop_hackathons + search_hackathons + company_hackathons
+    all_hackathons = unstop_hackathons + search_hackathons + company_hackathons + devpost_hackathons
 
     final = []
     for h in all_hackathons:
@@ -636,7 +639,7 @@ def main():
             )
         final.append(h)
 
-        print(f"Total candidate hackathons: {len(final)} (Unstop: {len(unstop_hackathons)}, web-search: {len(search_hackathons)}, company-sites: {len(company_hackathons)})")
+        print(f"Total candidate hackathons: {len(final)} (Unstop: {len(unstop_hackathons)}, web-search: {len(search_hackathons)}, company-sites: {len(company_hackathons)}, devpost: {len(devpost_hackathons)})")
 
     newly_inserted = save_to_supabase(final)
     print(f"Newly inserted into hackathons_staging: {len(newly_inserted)}")
