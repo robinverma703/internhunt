@@ -16,7 +16,14 @@ import {
 } from "lucide-react";
 import type { HackathonRow } from "@/app/hackathons/page";
 
-const CATEGORY_STYLES: Record<string, { chip: string; glow: string; icon: JSX.Element }> = {
+const TERMINAL_LINES = [
+  "git clone hackathon.git",
+  "npm run build --prod",
+  "compiling_team.exe",
+  "deploying_to_prod...",
+  "initializing_repo.sh",
+  "docker build -t app .",
+];const CATEGORY_STYLES: Record<string, { chip: string; glow: string; icon: JSX.Element }> = {
   College: {
     chip: "bg-indigo-500/15 text-indigo-300 border-indigo-400/30",
     glow: "group-hover:shadow-[0_0_50px_-10px_rgba(129,140,248,0.5)]",
@@ -330,8 +337,12 @@ export default function HackathonsShowcase({ hackathons }: { hackathons: Hackath
         .sweep-line {
           animation: sweep 2.5s ease-in-out infinite;
         }
-        .mesh-bg {
+               .mesh-bg {
           animation: hue-drift 12s ease-in-out infinite;
+        }
+        @keyframes blink { 0%, 45% { opacity: 1; } 50%, 95% { opacity: 0; } 100% { opacity: 1; } }
+        .terminal-cursor {
+          animation: blink 1.1s step-end infinite;
         }
       `}</style>
 
@@ -474,7 +485,12 @@ export default function HackathonsShowcase({ hackathons }: { hackathons: Hackath
               const style = CATEGORY_STYLES[h.category] ?? CATEGORY_STYLES.Open;
               const regDays = daysUntil(h.registration_deadline);
               return (
-                <SpotlightCard key={h.id} className={`p-5 ${style.glow}`}>
+                                <SpotlightCard key={h.id} className={`p-5 ${style.glow}`}>
+                  <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] text-emerald-400/60">
+                    <span>&gt;</span>
+                    <span>{TERMINAL_LINES[h.title.length % TERMINAL_LINES.length]}</span>
+                    <span className="terminal-cursor">_</span>
+                  </div>
                   <div className="mb-3 flex items-center justify-between">
                     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium ${style.chip}`}>
                       {style.icon}
