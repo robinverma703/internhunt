@@ -108,7 +108,7 @@ export default function Navbar() {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: hidden && !open ? -110 : 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: EASE }}
-      className="sticky top-0 z-40 px-4 pt-3"
+            className="sticky top-0 z-40 px-3 pt-2 sm:px-4 sm:pt-3"
     >
       <motion.div
         animate={{ maxWidth: scrolled ? 900 : 1120 }}
@@ -144,7 +144,7 @@ export default function Navbar() {
             radius
           }
         >
-          <div className="flex items-center justify-between px-5 py-2.5 md:px-6">
+                    <div className="flex items-center justify-between px-4 py-2 md:px-6 md:py-2.5">
             {/* Logo */}
             <Link href="/" data-cursor-hover className="flex items-center gap-2">
               <motion.span
@@ -205,7 +205,7 @@ export default function Navbar() {
               </div>
               <div className="sm:hidden">
                 <Link href="/login" data-cursor-hover>
-                  <span className="inline-flex items-center rounded-full bg-signal px-4 py-2 text-sm font-medium text-white">
+                                   <span className="inline-flex items-center rounded-full bg-signal px-3.5 py-1.5 text-[13px] font-medium text-white">
                     Get started
                   </span>
                 </Link>
@@ -216,7 +216,7 @@ export default function Navbar() {
                 aria-label={open ? "Close menu" : "Open menu"}
                 aria-expanded={open}
                 onClick={() => setOpen(!open)}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-graphite transition-colors hover:bg-black/5 md:hidden"
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-graphite transition-colors hover:bg-black/5 md:hidden"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span
@@ -279,7 +279,8 @@ export default function Navbar() {
           {/* scroll progress line */}
           <motion.div
             aria-hidden
-            style={{ scaleX: progress }}
+                       style={{ scaleX: progress }}
+            animate={{ opacity: scrolled ? 1 : 0 }}
             className="absolute bottom-0 left-8 right-8 h-[2px] origin-left rounded-full bg-gradient-to-r from-signal to-emerald-400"
           />
         </div>
