@@ -40,7 +40,7 @@ export default function Hero() {
     <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-signal/20 blur-3xl"
+        className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-signal/20 blur-3xl"
       />
       <div
         aria-hidden
