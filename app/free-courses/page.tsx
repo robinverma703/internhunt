@@ -40,10 +40,21 @@ const COURSES: Course[] = [
   { title: "Inbound Marketing", provider: "HubSpot Academy", domain: "academy.hubspot.com", url: "https://academy.hubspot.com/courses/inbound-marketing", category: "Marketing", duration: "3 hrs", certFree: true, verified: "Sep 2026" },
   { title: "Java Programming", provider: "Infosys Springboard", domain: "infyspringboard.onwingspan.com", url: "https://infyspringboard.onwingspan.com/web/en/page/home", category: "Web Dev", duration: "Self-paced", certFree: true, verified: "Sep 2026" },
   { title: "Python for Beginners", provider: "Microsoft Learn", domain: "learn.microsoft.com", url: "https://learn.microsoft.com/en-us/shows/intro-to-python-development/", category: "Web Dev", duration: "5 hrs", certFree: false, verified: "Sep 2026" },
+  { title: "Networking Basics (Skills for All)", provider: "Cisco Networking Academy", domain: "skillsforall.com", url: "https://skillsforall.com/", category: "Cloud", duration: "15 hrs", certFree: true, verified: "Sep 2026" },
+  { title: "Salesforce Admin Trailhead Path", provider: "Salesforce Trailhead", domain: "trailhead.salesforce.com", url: "https://trailhead.salesforce.com/", category: "Data", duration: "Self-paced", certFree: true, verified: "Sep 2026" },
+  { title: "OCI Foundations", provider: "Oracle University", domain: "mylearn.oracle.com", url: "https://mylearn.oracle.com/ou/learning-path/become-an-oci-foundations-associate/", category: "Cloud", duration: "5 hrs", certFree: false, verified: "Sep 2026" },
+  { title: "NSE 1-3 Network Security", provider: "Fortinet Training Institute", domain: "training.fortinet.com", url: "https://training.fortinet.com/", category: "Cloud", duration: "4 hrs", certFree: true, verified: "Sep 2026" },
+  { title: "Cybersecurity Foundation", provider: "Palo Alto Networks", domain: "paloaltonetworks.com", url: "https://www.paloaltonetworks.com/cybersecurity-academy", category: "Cloud", duration: "6 hrs", certFree: true, verified: "Sep 2026" },
+  { title: "Diploma in Digital Marketing", provider: "Alison", domain: "alison.com", url: "https://alison.com/", category: "Marketing", duration: "6-10 hrs", certFree: false, verified: "Sep 2026" },
+  { title: "Intro to Machine Learning", provider: "Kaggle Learn", domain: "kaggle.com", url: "https://www.kaggle.com/learn", category: "AI/ML", duration: "3 hrs", certFree: true, verified: "Sep 2026" },
+  { title: "Academic Interface & Soft Skills", provider: "Great Learning Academy", domain: "mygreatlearning.com", url: "https://www.mygreatlearning.com/academy", category: "Data", duration: "Self-paced", certFree: true, verified: "Sep 2026" },
 ];
 
 const CATEGORIES = ["All", "Cloud", "AI/ML", "Web Dev", "Data", "Marketing"];
-const BRANDS = ["Google", "Microsoft", "AWS", "NVIDIA", "IBM", "Meta", "freeCodeCamp", "HubSpot", "Infosys"];
+const BRANDS = [
+  "Google", "Microsoft", "AWS", "NVIDIA", "IBM", "freeCodeCamp", "HubSpot", "Infosys",
+  "Cisco", "Salesforce", "Oracle", "Fortinet", "Palo Alto Networks", "Alison", "Kaggle", "Great Learning",
+];
 const FLOATERS = [Award, GraduationCap, ShieldCheck, BadgeCheck, Sparkles];
 
 function HeroSpotlight() {
@@ -57,7 +68,7 @@ function HeroSpotlight() {
   }
 
   const bg = useTransform([x, y], ([lx, ly]) =>
-    `radial-gradient(420px circle at ${lx}px ${ly}px, rgba(42,76,255,0.14), transparent 70%)`
+    `radial-gradient(420px circle at ${lx}px ${ly}px, rgba(42,76,255,0.16), transparent 70%)`
   );
 
   return (
@@ -98,7 +109,7 @@ function TiltCard({ course, index }: { course: Course; index: number }) {
       initial={{ opacity: 0, y: 24, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ delay: index * 0.05, duration: 0.45, ease: EASE }}
+      transition={{ delay: index * 0.04, duration: 0.45, ease: EASE }}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       style={{ rotateX: srx, rotateY: sry, transformPerspective: 800 }}
@@ -187,29 +198,75 @@ export default function FreeCoursesPage() {
 
   return (
     <main className="relative isolate min-h-screen overflow-hidden bg-paper">
+      <style>{`
+        @keyframes ih-marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-33.3333%); }
+        }
+        @keyframes ih-beam {
+          0% { transform: translateX(-30%); opacity: 0; }
+          15% { opacity: 0.5; }
+          50% { opacity: 0.5; }
+          85% { opacity: 0; }
+          100% { transform: translateX(130%); opacity: 0; }
+        }
+        .ih-marquee-track {
+          animation: ih-marquee 30s linear infinite;
+        }
+        .ih-beam {
+          animation: ih-beam 9s ease-in-out infinite;
+        }
+      `}</style>
+
+      {/* grain texture */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-30 opacity-[0.05]"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+
       {/* dot grid */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-20 opacity-[0.35]"
+        className="pointer-events-none fixed inset-0 -z-20 opacity-[0.4]"
         style={{
           backgroundImage: "radial-gradient(rgba(15,23,42,0.18) 1px, transparent 1px)",
           backgroundSize: "26px 26px",
-          maskImage: "radial-gradient(ellipse 60% 50% at 50% 0%, black 40%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 0%, black 40%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 65% 55% at 50% 0%, black 40%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 65% 55% at 50% 0%, black 40%, transparent 100%)",
         }}
       />
+
+      {/* moving light beam sweeping the hero */}
+      <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[560px] overflow-hidden">
+        <div
+          className="ih-beam absolute top-0 h-full w-1/3 skew-x-[-18deg]"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(42,76,255,0.10), rgba(15,179,125,0.10), transparent)",
+          }}
+        />
+      </div>
 
       {/* aurora blobs */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <motion.div
-          animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
+          animate={{ x: [0, 60, 0], y: [0, 36, 0] }}
           transition={{ duration: 17, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -left-20 top-24 h-[380px] w-[380px] rounded-full bg-signal/20 blur-[110px]"
+          className="absolute -left-24 top-16 h-[440px] w-[440px] rounded-full bg-signal/25 blur-[120px]"
         />
         <motion.div
-          animate={{ x: [0, -40, 0], y: [0, 50, 0] }}
+          animate={{ x: [0, -46, 0], y: [0, 55, 0] }}
           transition={{ duration: 21, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -right-20 top-96 h-[340px] w-[340px] rounded-full bg-mint/20 blur-[110px]"
+          className="absolute -right-24 top-80 h-[400px] w-[400px] rounded-full bg-mint/25 blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
+          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-1/3 top-[40%] h-[300px] w-[300px] rounded-full bg-purple-300/15 blur-[110px]"
         />
       </div>
 
@@ -219,17 +276,9 @@ export default function FreeCoursesPage() {
           <motion.span
             key={i}
             className="absolute text-signal/10"
-            style={{
-              left: `${12 + i * 18}%`,
-              top: `${8 + (i % 3) * 22}%`,
-            }}
+            style={{ left: `${12 + i * 18}%`, top: `${8 + (i % 3) * 22}%` }}
             animate={{ y: [0, -18, 0], rotate: [0, 8, 0] }}
-            transition={{
-              duration: 8 + i * 1.4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.6,
-            }}
+            transition={{ duration: 8 + i * 1.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.6 }}
           >
             <Icon size={34 + (i % 3) * 10} />
           </motion.span>
@@ -288,7 +337,6 @@ export default function FreeCoursesPage() {
             the company&apos;s own site — no redirects, no middlemen.
           </motion.p>
 
-          {/* stats */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -309,25 +357,20 @@ export default function FreeCoursesPage() {
         </motion.div>
       </section>
 
-      {/* brand marquee */}
+      {/* brand marquee — seamless CSS loop */}
       <div className="relative mb-10 overflow-hidden py-2">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-paper to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-paper to-transparent" />
-        <motion.div
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-          className="flex w-max gap-10 whitespace-nowrap"
-        >
-          {[...BRANDS, ...BRANDS].map((b, i) => (
+        <div className="ih-marquee-track flex w-max gap-10 whitespace-nowrap">
+          {[...BRANDS, ...BRANDS, ...BRANDS].map((b, i) => (
             <span key={b + i} className="text-sm font-medium tracking-wide text-muted/70">
               {b}
             </span>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       <section className="mx-auto max-w-6xl px-6 pb-20">
-        {/* Search + filters */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -370,7 +413,6 @@ export default function FreeCoursesPage() {
           </div>
         </motion.div>
 
-        {/* Grid */}
         <motion.div layout className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout">
             {filtered.map((course, i) => (
@@ -391,7 +433,7 @@ export default function FreeCoursesPage() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: EASE }}
           className="mx-auto mt-16 max-w-lg rounded-2xl border border-black/5 bg-white/80 p-6 text-center shadow-sm backdrop-blur"
-        > 
+        >
           <p className="text-sm font-medium text-graphite">
             Know a genuinely free certification we&apos;re missing?
           </p>
