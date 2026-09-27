@@ -17,6 +17,7 @@ const LINKS = [
   { label: "How it works", href: "/#how-it-works", badge: false },
   { label: "Pricing", href: "/#pricing", badge: false },
   { label: "Hackathons", href: "/hackathons", badge: true },
+  { label: "Free Courses", href: "/free-courses", badge: false },
   { label: "Post a Job", href: "/post-job", badge: false },
 ];
 
