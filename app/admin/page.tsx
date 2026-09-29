@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AdminJobForm from "@/components/admin-job-form";
 import AdminStagingReview from "@/components/admin-staging-review";
+import AdminCourseStagingReview from "@/components/admin-course-staging-review";
 import AdminHackathonReview from "@/components/admin-hackathon-review";
 import AdminPaymentsReview from "@/components/admin-payments-review";
 import { getPendingPayments } from "@/lib/actions/get-pending-payments";
@@ -39,6 +40,10 @@ export default async function AdminPage() {
 
         <div className="mt-8">
           <AdminStagingReview />
+        </div>
+        
+        <div className="mt-8">
+          <AdminCourseStagingReview />
         </div>
 
         <div className="mt-8">

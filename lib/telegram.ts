@@ -30,3 +30,36 @@ export async function notifyNewJobs(jobs: NewJob[]) {
     // Never let a notification failure break the cron job.
   }
 }
+
+type NewCourse = {
+  title: string;
+  provider: string;
+};
+
+export async function notifyNewCourses(courses: NewCourse[]) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId || courses.length === 0) return;
+
+  const preview = courses
+    .slice(0, 5)
+    .map((c) => `• ${c.title} — ${c.provider}`)
+    .join("\n");
+  const more = courses.length > 5 ? `\n...and ${courses.length - 5} more` : "";
+
+  const text =
+    `🎓 InternHunt: ${courses.length} new course${courses.length > 1 ? "s" : ""} waiting for approval\n\n` +
+    `${preview}${more}\n\n` +
+    `Check the admin panel to approve/reject.`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    });
+  } catch {
+    // Never let a notification failure break the flow.
+  }
+}
