@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -11,7 +11,6 @@ import {
   ExternalLink,
   Award,
   GraduationCap,
-  Sparkles,
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -55,28 +54,81 @@ const BRANDS = [
   "Google", "Microsoft", "AWS", "NVIDIA", "IBM", "freeCodeCamp", "HubSpot", "Infosys",
   "Cisco", "Salesforce", "Oracle", "Fortinet", "Palo Alto Networks", "Alison", "Kaggle", "Great Learning",
 ];
-const FLOATERS = [Award, GraduationCap, ShieldCheck, BadgeCheck, Sparkles];
+const ROTATING_NAMES = ["Google", "Microsoft", "AWS", "NVIDIA", "Salesforce"];
+
+function RotatingWord() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((v) => (v + 1) % ROTATING_NAMES.length), 1800);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span className="relative inline-block h-[1.15em] min-w-[7ch] align-bottom overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={ROTATING_NAMES[i]}
+          initial={{ y: "60%", opacity: 0 }}
+          animate={{ y: "0%", opacity: 1 }}
+          exit={{ y: "-60%", opacity: 0 }}
+          transition={{ duration: 0.45, ease: EASE }}
+          className="inline-block bg-gradient-to-r from-signal via-mint to-signal bg-clip-text text-transparent"
+        >
+          {ROTATING_NAMES[i]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  );
+}
+
+function FloatingBadge({
+  Icon,
+  label,
+  style,
+  duration,
+}: {
+  Icon: typeof Award;
+  label: string;
+  style: React.CSSProperties;
+  duration: number;
+}) {
+  return (
+    <motion.div
+      style={{ ...style, transformStyle: "preserve-3d" }}
+      className="pointer-events-none absolute hidden md:block"
+      animate={{ y: [0, -16, 0], rotateY: [0, 14, 0, -14, 0] }}
+      transition={{ duration, repeat: Infinity, ease: "easeInOut" }}
+    >
+      <div className="flex w-36 items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.06] p-3 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-signal to-mint text-white">
+          <Icon size={16} />
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-[11px] font-medium text-white/90">{label}</p>
+          <p className="text-[9px] text-white/40">Verified free</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 function HeroSpotlight() {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
+  const x = useMotionValue(50);
+  const y = useMotionValue(50);
   function onMove(e: ReactMouseEvent<HTMLDivElement>) {
     const r = e.currentTarget.getBoundingClientRect();
-    x.set(e.clientX - r.left);
-    y.set(e.clientY - r.top);
+    x.set(((e.clientX - r.left) / r.width) * 100);
+    y.set(((e.clientY - r.top) / r.height) * 100);
   }
-
-  const bg = useTransform([x, y], ([lx, ly]) =>
-    `radial-gradient(420px circle at ${lx}px ${ly}px, rgba(42,76,255,0.16), transparent 70%)`
-  );
-
   return (
     <motion.div
       onMouseMove={onMove}
       aria-hidden
       className="pointer-events-none absolute inset-0 hidden md:block"
-      style={{ background: bg }}
+      style={{
+        background: useMotionValue(
+          "radial-gradient(500px circle at 50% 40%, rgba(255,255,255,0.06), transparent 70%)"
+        ),
+      }}
     />
   );
 }
@@ -135,22 +187,14 @@ function TiltCard({ course, index }: { course: Course; index: number }) {
           aria-hidden
           className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-signal/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
         />
-
         <div className="relative flex items-start justify-between">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-signal to-signal-deep text-base font-semibold text-white shadow-md shadow-signal/20">
             {course.provider.charAt(0)}
           </span>
-          <ArrowUpRight
-            size={17}
-            className="text-muted transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-signal"
-          />
+          <ArrowUpRight size={17} className="text-muted transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-signal" />
         </div>
-
-        <p className="relative mt-4 text-[15px] font-semibold leading-snug text-graphite">
-          {course.title}
-        </p>
+        <p className="relative mt-4 text-[15px] font-semibold leading-snug text-graphite">{course.title}</p>
         <p className="relative mt-0.5 text-sm text-muted">{course.provider}</p>
-
         <div className="relative mt-4 flex flex-wrap items-center gap-2 text-xs">
           <span
             className={
@@ -163,7 +207,6 @@ function TiltCard({ course, index }: { course: Course; index: number }) {
           </span>
           <span className="text-muted">{course.duration}</span>
         </div>
-
         <div className="relative mt-4 flex items-center justify-between border-t border-black/5 pt-3 text-[11px] text-muted">
           <span className="inline-flex items-center gap-1">
             <ExternalLink size={11} />
@@ -182,7 +225,6 @@ function TiltCard({ course, index }: { course: Course; index: number }) {
 export default function FreeCoursesPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
-  const floatersRef = useRef(FLOATERS);
 
   const filtered = useMemo(() => {
     return COURSES.filter((c) => {
@@ -197,168 +239,136 @@ export default function FreeCoursesPage() {
   const brandCount = new Set(COURSES.map((c) => c.provider)).size;
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-paper">
+    <main className="relative isolate min-h-screen bg-paper">
       <style>{`
-        @keyframes ih-marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-33.3333%); }
-        }
-        @keyframes ih-beam {
-          0% { transform: translateX(-30%); opacity: 0; }
-          15% { opacity: 0.5; }
-          50% { opacity: 0.5; }
-          85% { opacity: 0; }
-          100% { transform: translateX(130%); opacity: 0; }
-        }
-        .ih-marquee-track {
-          animation: ih-marquee 30s linear infinite;
-        }
-        .ih-beam {
-          animation: ih-beam 9s ease-in-out infinite;
-        }
+        @keyframes ih-marquee { from { transform: translateX(0); } to { transform: translateX(-33.3333%); } }
+        .ih-marquee-track { animation: ih-marquee 30s linear infinite; }
+        @keyframes ih-grid-move { from { background-position: 0 0; } to { background-position: 0 60px; } }
+        .ih-grid-floor { animation: ih-grid-move 6s linear infinite; }
+        @keyframes ih-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.7; } }
       `}</style>
 
-      {/* grain texture */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-30 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
+      {/* ===== DARK LUXURY HERO ===== */}
+      <div className="relative overflow-hidden bg-[#05070f]">
+        {/* stars */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute h-[2px] w-[2px] rounded-full bg-white"
+              style={{
+                left: `${(i * 47) % 100}%`,
+                top: `${(i * 29) % 70}%`,
+                animation: `ih-twinkle ${3 + (i % 5)}s ease-in-out infinite`,
+                animationDelay: `${(i % 7) * 0.4}s`,
+              }}
+            />
+          ))}
+        </div>
 
-      {/* dot grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-20 opacity-[0.4]"
-        style={{
-          backgroundImage: "radial-gradient(rgba(15,23,42,0.18) 1px, transparent 1px)",
-          backgroundSize: "26px 26px",
-          maskImage: "radial-gradient(ellipse 65% 55% at 50% 0%, black 40%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 65% 55% at 50% 0%, black 40%, transparent 100%)",
-        }}
-      />
+        {/* color mesh */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <motion.div
+            animate={{ x: [0, 60, 0], y: [0, 40, 0] }}
+            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -left-32 top-0 h-[460px] w-[460px] rounded-full bg-signal/30 blur-[130px]"
+          />
+          <motion.div
+            animate={{ x: [0, -50, 0], y: [0, 30, 0] }}
+            transition={{ duration: 19, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -right-24 top-10 h-[420px] w-[420px] rounded-full bg-mint/25 blur-[130px]"
+          />
+          <motion.div
+            animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+            transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-1/3 top-1/3 h-[300px] w-[300px] rounded-full bg-purple-500/20 blur-[120px]"
+          />
+        </div>
 
-      {/* moving light beam sweeping the hero */}
-      <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[560px] overflow-hidden">
+        {/* 3D perspective grid floor */}
         <div
-          className="ih-beam absolute top-0 h-full w-1/3 skew-x-[-18deg]"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(42,76,255,0.10), rgba(15,179,125,0.10), transparent)",
-          }}
-        />
-      </div>
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[260px] overflow-hidden"
+          style={{ perspective: "500px" }}
+        >
+          <div
+            className="ih-grid-floor absolute inset-x-[-50%] bottom-0 h-[500px]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.14) 1px, transparent 1px)",
+              backgroundSize: "60px 60px",
+              transform: "rotateX(75deg)",
+              transformOrigin: "bottom",
+              maskImage: "linear-gradient(to top, black, transparent)",
+              WebkitMaskImage: "linear-gradient(to top, black, transparent)",
+            }}
+          />
+        </div>
 
-      {/* aurora blobs */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <motion.div
-          animate={{ x: [0, 60, 0], y: [0, 36, 0] }}
-          transition={{ duration: 17, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -left-24 top-16 h-[440px] w-[440px] rounded-full bg-signal/25 blur-[120px]"
-        />
-        <motion.div
-          animate={{ x: [0, -46, 0], y: [0, 55, 0] }}
-          transition={{ duration: 21, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -right-24 top-80 h-[400px] w-[400px] rounded-full bg-mint/25 blur-[120px]"
-        />
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -30, 0] }}
-          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/3 top-[40%] h-[300px] w-[300px] rounded-full bg-purple-300/15 blur-[110px]"
-        />
-      </div>
-
-      {/* floating certificate icons */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 hidden md:block">
-        {floatersRef.current.map((Icon, i) => (
-          <motion.span
-            key={i}
-            className="absolute text-signal/10"
-            style={{ left: `${12 + i * 18}%`, top: `${8 + (i % 3) * 22}%` }}
-            animate={{ y: [0, -18, 0], rotate: [0, 8, 0] }}
-            transition={{ duration: 8 + i * 1.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.6 }}
-          >
-            <Icon size={34 + (i % 3) * 10} />
-          </motion.span>
-        ))}
-      </div>
-
-      <Navbar />
-
-      <section className="relative mx-auto max-w-6xl px-6 pb-8 pt-14 md:pt-20">
         <HeroSpotlight />
 
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: EASE }}
-          className="relative text-center"
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-black/5 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-graphite shadow-sm backdrop-blur">
-            <ShieldCheck size={13} className="text-mint" />
-            Verified genuinely free &middot; No third-party links
-          </span>
+        {/* floating 3D badges */}
+        <FloatingBadge Icon={Award} label="Google Cloud" style={{ left: "6%", top: "34%" }} duration={7} />
+        <FloatingBadge Icon={ShieldCheck} label="AWS Skill Builder" style={{ right: "6%", top: "26%" }} duration={8.5} />
+        <FloatingBadge Icon={GraduationCap} label="Microsoft Learn" style={{ right: "12%", top: "58%" }} duration={9.5} />
 
-          <h1 className="mx-auto mt-5 max-w-2xl text-4xl font-semibold leading-[1.08] tracking-tight text-graphite md:text-5xl">
-            {["Free", "certificates."].map((word, i) => (
-              <motion.span
-                key={word}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.1, duration: 0.5, ease: EASE }}
-                className="inline-block"
-              >
-                {word}&nbsp;
-              </motion.span>
-            ))}
-            <br />
-            {["Straight", "from", "the", "source."].map((word, i) => (
-              <motion.span
-                key={word}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 + i * 0.08, duration: 0.5, ease: EASE }}
-                className="inline-block bg-gradient-to-r from-signal to-mint bg-clip-text text-transparent"
-              >
-                {word}&nbsp;
-              </motion.span>
-            ))}
-          </h1>
+        <Navbar />
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.6 }}
-            className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-muted"
-          >
-            Every course here is checked by hand. Every link goes straight to
-            the company&apos;s own site — no redirects, no middlemen.
-          </motion.p>
-
+        <section className="relative mx-auto max-w-6xl px-6 pb-24 pt-10 md:pb-28 md:pt-14">
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.85, duration: 0.5, ease: EASE }}
-            className="mx-auto mt-7 flex max-w-md items-center justify-center divide-x divide-black/5 rounded-2xl border border-black/5 bg-white/70 py-3 shadow-sm backdrop-blur"
+            transition={{ duration: 0.7, ease: EASE }}
+            className="relative text-center"
           >
-            {[
-              { n: COURSES.length, label: "Courses" },
-              { n: brandCount, label: "Companies" },
-              { n: certFreeCount, label: "Free certs" },
-            ].map((s) => (
-              <div key={s.label} className="flex-1 px-2 text-center">
-                <p className="text-xl font-semibold text-graphite">{s.n}</p>
-                <p className="text-[11px] text-muted">{s.label}</p>
-              </div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-xs font-medium text-white/80 backdrop-blur">
+              <ShieldCheck size={13} className="text-mint" />
+              Verified genuinely free &middot; No third-party links
+            </span>
 
-      {/* brand marquee — seamless CSS loop */}
-      <div className="relative mb-10 overflow-hidden py-2">
+            <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold leading-[1.15] tracking-tight text-white md:text-5xl">
+              Free certificates
+              <br />
+              from <RotatingWord />
+            </h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-white/50"
+            >
+              Every course here is checked by hand. Every link goes straight to
+              the company&apos;s own site — no redirects, no middlemen.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.5, ease: EASE }}
+              className="mx-auto mt-8 flex max-w-md items-center justify-center divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.06] py-3 backdrop-blur"
+            >
+              {[
+                { n: COURSES.length, label: "Courses" },
+                { n: brandCount, label: "Companies" },
+                { n: certFreeCount, label: "Free certs" },
+              ].map((s) => (
+                <div key={s.label} className="flex-1 px-2 text-center">
+                  <p className="text-xl font-semibold text-white">{s.n}</p>
+                  <p className="text-[11px] text-white/40">{s.label}</p>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
+        </section>
+
+        {/* fade into light content */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-paper" />
+      </div>
+      {/* ===== END DARK HERO ===== */}
+
+      {/* brand marquee */}
+      <div className="relative -mt-2 mb-10 overflow-hidden py-2">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-paper to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-paper to-transparent" />
         <div className="ih-marquee-track flex w-max gap-10 whitespace-nowrap">
