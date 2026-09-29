@@ -54,8 +54,11 @@ const BRANDS = [
   "Google", "Microsoft", "AWS", "NVIDIA", "IBM", "freeCodeCamp", "HubSpot", "Infosys",
   "Cisco", "Salesforce", "Oracle", "Fortinet", "Palo Alto Networks", "Alison", "Kaggle", "Great Learning",
 ];
-const ROTATING_NAMES = ["Google", "Microsoft", "AWS", "NVIDIA", "Salesforce"];
-
+const ROTATING_NAMES = [
+  "Google", "Microsoft", "AWS", "NVIDIA", "IBM", "Cisco", "Salesforce",
+  "Fortinet", "Palo Alto Networks", "HubSpot", "Infosys", "freeCodeCamp",
+  "Kaggle", "Great Learning", "Meta", "Khan Academy", "HP LIFE",
+];
 function RotatingWord() {
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -63,7 +66,7 @@ function RotatingWord() {
     return () => clearInterval(id);
   }, []);
   return (
-    <span className="relative inline-block h-[1.15em] min-w-[7ch] align-bottom overflow-hidden">
+        <span className="relative inline-block h-[1.2em] min-w-[7ch] overflow-hidden pb-1 align-baseline">
       <AnimatePresence mode="wait">
         <motion.span
           key={ROTATING_NAMES[i]}
@@ -326,10 +329,12 @@ export default function FreeCoursesPage() {
               Verified genuinely free &middot; No third-party links
             </span>
 
-            <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold leading-[1.15] tracking-tight text-white md:text-5xl">
+                        <h1 className="mx-auto mt-6 max-w-2xl text-4xl font-semibold leading-[1.3] tracking-tight text-white md:text-5xl">
               Free certificates
               <br />
-              from <RotatingWord />
+              <span className="mt-1 inline-flex items-baseline gap-3">
+                from <RotatingWord />
+              </span>
             </h1>
 
             <motion.p
@@ -363,7 +368,7 @@ export default function FreeCoursesPage() {
         </section>
 
         {/* fade into light content */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-paper" />
+               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-transparent to-paper" />
       </div>
       {/* ===== END DARK HERO ===== */}
 
