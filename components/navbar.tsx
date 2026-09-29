@@ -113,7 +113,7 @@ export default function Navbar({ dimUntilInteract = false }: { dimUntilInteract?
         y: hidden && !open ? -110 : 0,
         opacity: !revealed ? 0.1 : 1,
       }}
-      onMouseEnter={() => setRevealed(true)}
+      
       transition={{ duration: 0.6, ease: EASE }}
             className="sticky top-0 z-40 px-3 pt-2 sm:px-4 sm:pt-3"
     >
