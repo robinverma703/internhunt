@@ -67,12 +67,13 @@ function MagneticCTA() {
   );
 }
 
-export default function Navbar() {
+export default function Navbar({ dimUntilInteract = false }: { dimUntilInteract?: boolean }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(!dimUntilInteract);
   const lastY = useRef(0);
 
   const { scrollYProgress } = useScroll();
@@ -82,10 +83,11 @@ export default function Navbar() {
     mass: 0.3,
   });
 
-  useEffect(() => {
+   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       setScrolled(y > 12);
+      if (y > 30) setRevealed(true);
       if (y > 240 && y > lastY.current + 4) {
         setHidden(true);
       } else if (y < lastY.current - 4 || y <= 240) {
@@ -107,7 +109,11 @@ export default function Navbar() {
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
-      animate={{ y: hidden && !open ? -110 : 0, opacity: 1 }}
+            animate={{
+        y: hidden && !open ? -110 : 0,
+        opacity: !revealed ? 0.1 : 1,
+      }}
+      onMouseEnter={() => setRevealed(true)}
       transition={{ duration: 0.6, ease: EASE }}
             className="sticky top-0 z-40 px-3 pt-2 sm:px-4 sm:pt-3"
     >

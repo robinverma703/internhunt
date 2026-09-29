@@ -330,7 +330,7 @@ export default function FreeCoursesPage() {
         <FloatingBadge Icon={GraduationCap} label="HubSpot Academy" style={{ left: "34%", top: "12%" }} duration={6.8} />
         <FloatingBadge Icon={Award} label="Kaggle Learn" style={{ right: "34%", top: "70%" }} duration={8.3} />
 
-        <Navbar />
+        <Navbar dimUntilInteract />
 
         <section className="relative mx-auto max-w-6xl px-6 pb-24 pt-10 md:pb-28 md:pt-14">
           <motion.div
