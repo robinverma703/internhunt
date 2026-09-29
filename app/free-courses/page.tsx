@@ -11,6 +11,12 @@ import {
   ExternalLink,
   Award,
   GraduationCap,
+  Cloud,
+  Cpu,
+  Database,
+  Rocket,
+  Star,
+  Trophy,
 } from "lucide-react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
@@ -310,10 +316,19 @@ export default function FreeCoursesPage() {
 
         <HeroSpotlight />
 
-        {/* floating 3D badges */}
-        <FloatingBadge Icon={Award} label="Google Cloud" style={{ left: "6%", top: "34%" }} duration={7} />
-        <FloatingBadge Icon={ShieldCheck} label="AWS Skill Builder" style={{ right: "6%", top: "26%" }} duration={8.5} />
-        <FloatingBadge Icon={GraduationCap} label="Microsoft Learn" style={{ right: "12%", top: "58%" }} duration={9.5} />
+               {/* floating 3D badges */}
+        <FloatingBadge Icon={Award} label="Google Cloud" style={{ left: "5%", top: "20%" }} duration={7} />
+        <FloatingBadge Icon={ShieldCheck} label="AWS Skill Builder" style={{ right: "5%", top: "16%" }} duration={8.5} />
+        <FloatingBadge Icon={GraduationCap} label="Microsoft Learn" style={{ right: "10%", top: "64%" }} duration={9.5} />
+        <FloatingBadge Icon={Cpu} label="NVIDIA DLI" style={{ left: "10%", top: "62%" }} duration={6.5} />
+        <FloatingBadge Icon={Database} label="IBM SkillsBuild" style={{ left: "2%", top: "48%" }} duration={10} />
+        <FloatingBadge Icon={Cloud} label="Cisco Academy" style={{ right: "2%", top: "44%" }} duration={7.8} />
+        <FloatingBadge Icon={Trophy} label="Salesforce Trailhead" style={{ left: "20%", top: "8%" }} duration={9} />
+        <FloatingBadge Icon={Star} label="Fortinet Training" style={{ right: "20%", top: "6%" }} duration={8} />
+        <FloatingBadge Icon={Rocket} label="freeCodeCamp" style={{ left: "16%", top: "78%" }} duration={7.2} />
+        <FloatingBadge Icon={BadgeCheck} label="Palo Alto Networks" style={{ right: "16%", top: "80%" }} duration={9.8} />
+        <FloatingBadge Icon={GraduationCap} label="HubSpot Academy" style={{ left: "34%", top: "12%" }} duration={6.8} />
+        <FloatingBadge Icon={Award} label="Kaggle Learn" style={{ right: "34%", top: "70%" }} duration={8.3} />
 
         <Navbar />
 
