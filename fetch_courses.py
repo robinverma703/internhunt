@@ -80,6 +80,7 @@ MAX_PAGE_CHARS = 8000
 MAX_LINKS_PER_HUB = 8
 REQUEST_TIMEOUT = 15
 SLEEP_BETWEEN_CALLS = 1.2
+MAX_COURSES_PER_RUN = 20
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
@@ -148,17 +149,23 @@ def call_gemini(prompt):
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0},
     }
-    try:
-        res = requests.post(url, json=body, timeout=REQUEST_TIMEOUT)
-        if not res.ok:
-            print("  [gemini http error] " + str(res.status_code) + ": " + res.text[:200])
+    for attempt in range(3):
+        try:
+            res = requests.post(url, json=body, timeout=REQUEST_TIMEOUT)
+            if res.status_code == 429:
+                print("  [gemini rate limited, waiting] attempt " + str(attempt + 1))
+                time.sleep(20)
+                continue
+            if not res.ok:
+                print("  [gemini http error] " + str(res.status_code) + ": " + res.text[:200])
+                return None
+            data = res.json()
+            parts = data["candidates"][0]["content"]["parts"]
+            return "".join(p.get("text", "") for p in parts)
+        except Exception as e:
+            print("  [gemini error] " + str(e))
             return None
-        data = res.json()
-        parts = data["candidates"][0]["content"]["parts"]
-        return "".join(p.get("text", "") for p in parts)
-    except Exception as e:
-        print("  [gemini error] " + str(e))
-        return None
+    return None
 
 
 def extract_course_from_page(page_text):
@@ -267,7 +274,7 @@ def main():
     print("Total " + str(len(all_candidate_urls)) + " unique candidate course pages to check.")
 
     all_courses = []
-    for url in all_candidate_urls:
+    for url in list(all_candidate_urls)[:MAX_COURSES_PER_RUN]:
         html = fetch_raw_html(url)
         if not html:
             continue
@@ -284,7 +291,7 @@ def main():
         extracted["source"] = "hub-crawl"
         extracted["source_id"] = make_source_id(url)
         all_courses.append(extracted)
-        time.sleep(SLEEP_BETWEEN_CALLS)
+        time.sleep(4)
 
     print("Extracted " + str(len(all_courses)) + " candidate courses total.")
 
