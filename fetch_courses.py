@@ -19,8 +19,6 @@ SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-# Each entry: a real catalog/hub page on an official domain that lists
-# multiple courses. The script visits these directly — no search engine.
 HUB_PAGES = [
     "https://www.cloudskillsboost.google/catalog",
     "https://learndigital.withgoogle.com/digitalgarage/courses",
@@ -89,17 +87,17 @@ USER_AGENTS = [
 ]
 
 
-def domain_of(url: str) -> str:
+def domain_of(url):
     match = re.search(r"https?://(?:www\.)?([^/]+)", url)
     return match.group(1).lower() if match else ""
 
 
-def is_allowed_domain(url: str) -> bool:
+def is_allowed_domain(url):
     d = domain_of(url)
     return any(d == allowed or d.endswith("." + allowed) for allowed in ALLOWED_DOMAINS)
 
 
-def strip_html(html: str) -> str:
+def strip_html(html):
     html = re.sub(r"<script[\s\S]*?</script>", " ", html, flags=re.IGNORECASE)
     html = re.sub(r"<style[\s\S]*?</style>", " ", html, flags=re.IGNORECASE)
     html = re.sub(r"<[^>]*>", " ", html)
@@ -107,7 +105,7 @@ def strip_html(html: str) -> str:
     return html
 
 
-def fetch_raw_html(url: str):
+def fetch_raw_html(url):
     try:
         headers = {"User-Agent": random.choice(USER_AGENTS)}
         res = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
@@ -115,12 +113,11 @@ def fetch_raw_html(url: str):
             return None
         return res.text
     except Exception as e:
-        print(f"  [fetch error] {url}: {e}")
+        print("  [fetch error] " + url + ": " + str(e))
         return None
 
 
-def extract_links_from_hub(hub_url: str, html: str):
-    """Pull plausible course-page links out of a catalog/hub page."""
+def extract_links_from_hub(hub_url, html):
     hrefs = re.findall(r'href=["\']([^"\']+)["\']', html)
     base_domain = domain_of(hub_url)
     links = []
@@ -128,7 +125,7 @@ def extract_links_from_hub(hub_url: str, html: str):
         if href.startswith("//"):
             href = "https:" + href
         elif href.startswith("/"):
-            href = f"https://{base_domain}{href}"
+            href = "https://" + base_domain + href
         if not href.startswith("http"):
             continue
         if not is_allowed_domain(href):
@@ -136,7 +133,6 @@ def extract_links_from_hub(hub_url: str, html: str):
         if href.rstrip("/") == hub_url.rstrip("/"):
             continue
         links.append(href)
-    # de-dupe, keep order
     seen = set()
     unique = []
     for l in links:
@@ -146,11 +142,8 @@ def extract_links_from_hub(hub_url: str, html: str):
     return unique[:MAX_LINKS_PER_HUB]
 
 
-def call_gemini(prompt: str):
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-flash-lite-latest:generateContent?key={GEMINI_API_KEY}"
-    )
+def call_gemini(prompt):
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=" + GEMINI_API_KEY
     body = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0},
@@ -158,16 +151,17 @@ def call_gemini(prompt: str):
     try:
         res = requests.post(url, json=body, timeout=REQUEST_TIMEOUT)
         if not res.ok:
+            print("  [gemini http error] " + str(res.status_code) + ": " + res.text[:200])
             return None
         data = res.json()
         parts = data["candidates"][0]["content"]["parts"]
         return "".join(p.get("text", "") for p in parts)
     except Exception as e:
-        print(f"  [gemini error] {e}")
+        print("  [gemini error] " + str(e))
         return None
 
 
-def extract_course_from_page(page_text: str):
+def extract_course_from_page(page_text):
     prompt = (
         "Here is text scraped from an official company training/learning web page. "
         "Determine if this page describes ONE specific course or learning path that "
@@ -181,7 +175,7 @@ def extract_course_from_page(page_text: str):
         '"confidence": "high" or "low"}\n\n'
         "If this is not a specific course page, respond with exactly: "
         '{"is_course": false}\n\n'
-        f"PAGE TEXT:\n{page_text[:MAX_PAGE_CHARS]}"
+        "PAGE TEXT:\n" + page_text[:MAX_PAGE_CHARS]
     )
     text = call_gemini(prompt)
     if not text:
@@ -208,17 +202,17 @@ def extract_course_from_page(page_text: str):
         return None
 
 
-def make_source_id(url: str) -> str:
+def make_source_id(url):
     return hashlib.sha256(url.encode()).hexdigest()[:40]
 
 
-def save_to_supabase(courses: list):
+def save_to_supabase(courses):
     if not courses:
         return []
-    url = f"{SUPABASE_URL}/rest/v1/course_staging"
+    url = SUPABASE_URL + "/rest/v1/course_staging"
     headers = {
         "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Authorization": "Bearer " + SUPABASE_SERVICE_ROLE_KEY,
         "Content-Type": "application/json",
         "Prefer": "resolution=ignore-duplicates,return=representation",
     }
@@ -226,51 +220,51 @@ def save_to_supabase(courses: list):
     try:
         res = requests.post(url, headers=headers, params=params, json=courses, timeout=30)
         if not res.ok:
-            print(f"  [supabase error] {res.status_code}: {res.text[:300]}")
+            print("  [supabase error] " + str(res.status_code) + ": " + res.text[:300])
             return []
         return res.json()
     except Exception as e:
-        print(f"  [supabase error] {e}")
+        print("  [supabase error] " + str(e))
         return []
 
 
-def notify_telegram(new_courses: list):
+def notify_telegram(new_courses):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID or not new_courses:
         return
-    preview = "\n".join(f"• {c['title']} — {c['provider']}" for c in new_courses[:5])
-    more = f"\n...and {len(new_courses) - 5} more" if len(new_courses) > 5 else ""
+    preview = "\n".join("• " + c["title"] + " — " + c["provider"] for c in new_courses[:5])
+    more = "\n...and " + str(len(new_courses) - 5) + " more" if len(new_courses) > 5 else ""
     text = (
-        f"🎓 InternHunt: {len(new_courses)} new course"
-        f"{'s' if len(new_courses) > 1 else ''} waiting for approval\n\n"
-        f"{preview}{more}\n\nCheck the admin panel to approve/reject."
+        "🎓 InternHunt: " + str(len(new_courses)) + " new course"
+        + ("s" if len(new_courses) > 1 else "") + " waiting for approval\n\n"
+        + preview + more + "\n\nCheck the admin panel to approve/reject."
     )
     try:
         requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            "https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage",
             json={"chat_id": TELEGRAM_CHAT_ID, "text": text},
             timeout=10,
         )
     except Exception as e:
-        print(f"  [telegram error] {e}")
+        print("  [telegram error] " + str(e))
 
 
 def main():
-    print(f"Starting course fetch across {len(HUB_PAGES)} official hub pages...")
+    print("Starting course fetch across " + str(len(HUB_PAGES)) + " official hub pages...")
 
     all_candidate_urls = set()
     for hub_url in HUB_PAGES:
-        print(f"Visiting hub: {hub_url}")
+        print("Visiting hub: " + hub_url)
         html = fetch_raw_html(hub_url)
         if not html:
             print("  -> could not load")
             time.sleep(SLEEP_BETWEEN_CALLS)
             continue
         links = extract_links_from_hub(hub_url, html)
-        print(f"  -> {len(links)} candidate course links found")
+        print("  -> " + str(len(links)) + " candidate course links found")
         all_candidate_urls.update(links)
         time.sleep(SLEEP_BETWEEN_CALLS)
 
-    print(f"Total {len(all_candidate_urls)} unique candidate course pages to check.")
+    print("Total " + str(len(all_candidate_urls)) + " unique candidate course pages to check.")
 
     all_courses = []
     for url in all_candidate_urls:
@@ -292,10 +286,10 @@ def main():
         all_courses.append(extracted)
         time.sleep(SLEEP_BETWEEN_CALLS)
 
-    print(f"Extracted {len(all_courses)} candidate courses total.")
+    print("Extracted " + str(len(all_courses)) + " candidate courses total.")
 
     newly_inserted = save_to_supabase(all_courses)
-    print(f"Newly inserted into course_staging: {len(newly_inserted)}")
+    print("Newly inserted into course_staging: " + str(len(newly_inserted)))
 
     if newly_inserted:
         notify_telegram(newly_inserted)
