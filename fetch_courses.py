@@ -7,6 +7,7 @@ import os
 import re
 import json
 import time
+import random
 import hashlib
 import requests
 
@@ -19,52 +20,115 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 # Only these official domains are ever accepted — no third-party aggregators.
 ALLOWED_DOMAINS = [
     "cloudskillsboost.google", "learndigital.withgoogle.com", "grow.google",
-    "learn.microsoft.com", "aws.amazon.com", "nvidia.com",
-    "skillsbuild.org", "freecodecamp.org", "academy.hubspot.com",
-    "infyspringboard.onwingspan.com", "skillsforall.com",
-    "trailhead.salesforce.com", "mylearn.oracle.com", "training.fortinet.com",
-    "paloaltonetworks.com", "kaggle.com", "mygreatlearning.com",
-    "developers.google.com",
+    "developers.google.com", "skillshop.exceedlms.com", "digitalgarage.google",
+    "learn.microsoft.com", "aka.ms",
+    "aws.amazon.com", "explore.skillbuilder.aws",
+    "nvidia.com", "courses.nvidia.com",
+    "skillsbuild.org", "ibm.com",
+    "freecodecamp.org",
+    "academy.hubspot.com",
+    "infyspringboard.onwingspan.com",
+    "skillsforall.com", "netacad.com",
+    "trailhead.salesforce.com",
+    "mylearn.oracle.com",
+    "training.fortinet.com",
+    "paloaltonetworks.com",
+    "kaggle.com",
+    "mygreatlearning.com",
+    "alison.com",
+    "hp.com",
+    "developer.mozilla.org",
+    "facebookblueprint.com", "meta.com",
+    "g2.com",
+    "semrush.com",
+    "zoho.com",
+    "skillup.online",
+    "coursera.org",
+    "edx.org",
+    "khanacademy.org",
+    "sap.com",
+    "simplilearn.com",
+    "adobe.com",
+    "university.atlassian.com",
+    "databricks.com",
+    "snowflake.com",
+    "redhat.com",
+    "vmware.com",
+    "splunk.com",
+    "tableau.com",
+    "university.mongodb.com", "mongodb.com",
+    "elastic.co",
+    "docker.com",
+    "postman.com",
+    "skills.github.com", "github.com",
+    "gitlab.com",
+    "digitalocean.com",
+    "twilio.com",
+    "shopify.com",
+    "canva.com",
+    "hootsuite.com",
+    "buffer.com",
+    "mailchimp.com",
 ]
 
 SEARCH_QUERIES = [
-    "site:cloudskillsboost.google free certificate",
-    "site:learn.microsoft.com free certification path",
-    "site:aws.amazon.com skill builder free course certificate",
-    "site:nvidia.com deep learning institute free course",
-    "site:skillsbuild.org free certificate course",
-    "site:freecodecamp.org certification",
-    "site:academy.hubspot.com free certification",
-    "site:skillsforall.com free course certificate",
-    "site:trailhead.salesforce.com free badge",
-    "site:training.fortinet.com free certification",
+    "official free certificate course technology",
+    "free certification training program tech company 2026",
+    "learn.microsoft.com free certification path",
+    "aws skill builder free digital training certificate",
+    "google cloud skills boost free course badge",
+    "nvidia deep learning institute free course certificate",
+    "ibm skillsbuild free certificate course",
+    "cisco networking academy free course certificate",
+    "salesforce trailhead free badge certification",
+    "freecodecamp certification free",
+    "hubspot academy free certification course",
+    "fortinet free network security certification",
+    "kaggle learn free micro course certificate",
+    "great learning academy free certificate course",
+    "meta blueprint free certification course",
+    "adobe free certification course creative",
+    "atlassian university free certification",
+    "databricks free training certification",
+    "redhat free training certification course",
+    "github skills free certificate course",
 ]
 
-RESULTS_PER_QUERY = 6
+RESULTS_PER_QUERY = 8
 MAX_PAGE_CHARS = 6000
 REQUEST_TIMEOUT = 15
-SLEEP_BETWEEN_CALLS = 1.0
+SLEEP_BETWEEN_CALLS = 1.5
+MAX_SEARCH_RETRIES = 3
+
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0 Safari/537.36",
+]
 
 
 def duckduckgo_search(query: str, num: int = RESULTS_PER_QUERY):
     url = "https://html.duckduckgo.com/html/"
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; InternHuntBot/1.0)"}
-    try:
-        res = requests.post(url, data={"q": query}, headers=headers, timeout=REQUEST_TIMEOUT)
-        if not res.ok:
-            return []
-        raw_links = re.findall(r'class="result__a"[^>]*href="([^"]+)"', res.text)
-        links = []
-        for link in raw_links[:num]:
-            match = re.search(r"uddg=([^&]+)", link)
-            if match:
-                links.append(requests.utils.unquote(match.group(1)))
-            elif link.startswith("http"):
-                links.append(link)
-        return links
-    except Exception as e:
-        print(f"  [search error] '{query}': {e}")
-        return []
+    for attempt in range(MAX_SEARCH_RETRIES):
+        headers = {"User-Agent": random.choice(USER_AGENTS)}
+        try:
+            res = requests.post(url, data={"q": query}, headers=headers, timeout=REQUEST_TIMEOUT)
+            if res.ok:
+                raw_links = re.findall(r'class="result__a"[^>]*href="([^"]+)"', res.text)
+                links = []
+                for link in raw_links[:num]:
+                    match = re.search(r"uddg=([^&]+)", link)
+                    if match:
+                        links.append(requests.utils.unquote(match.group(1)))
+                    elif link.startswith("http"):
+                        links.append(link)
+                if links:
+                    return links
+            time.sleep(2 + attempt * 2)
+        except Exception as e:
+            print(f"  [search error attempt {attempt+1}] '{query}': {e}")
+            time.sleep(2 + attempt * 2)
+    return []
 
 
 def domain_of(url: str) -> str:
@@ -87,7 +151,7 @@ def strip_html(html: str) -> str:
 
 def fetch_page_text(url: str):
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; InternHuntBot/1.0)"}
+        headers = {"User-Agent": random.choice(USER_AGENTS)}
         res = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
         if not res.ok:
             return None
@@ -217,7 +281,9 @@ def main():
     for query in SEARCH_QUERIES:
         print(f"Searching: {query}")
         urls = duckduckgo_search(query)
-        all_candidate_urls.update(u for u in urls if is_allowed_domain(u))
+        allowed = [u for u in urls if is_allowed_domain(u)]
+        print(f"  -> {len(urls)} results, {len(allowed)} on allowed domains")
+        all_candidate_urls.update(allowed)
         time.sleep(SLEEP_BETWEEN_CALLS)
 
     print(f"Found {len(all_candidate_urls)} candidate pages on official domains.")
