@@ -20,6 +20,14 @@ const INDIAN_CITIES = [
   "Remote",
 ];
 
+function classifyOrigin(location?: string | null): "india" | "international" | "unspecified" {
+  const loc = (location ?? "").toLowerCase().trim();
+  if (!loc) return "unspecified";
+  if (loc.includes("india")) return "india";
+  if (INDIAN_CITIES.some((c) => loc.includes(c.toLowerCase()))) return "india";
+  return "international";
+}
+
 export default function JobFeed({
   jobs,
   resumeSkills = [],
@@ -30,8 +38,8 @@ export default function JobFeed({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [city, setCity] = useState<string>("All Cities");
+  const [origin, setOrigin] = useState<"All" | "india" | "international">("All");
   const [sortByMatch, setSortByMatch] = useState(resumeSkills.length > 0);
-
   const hasResume = resumeSkills.length > 0;
 
   const categories = useMemo(
@@ -63,19 +71,21 @@ export default function JobFeed({
     }));
   }, [jobs, resumeSkills, hasResume]);
 
-  const filtered = useMemo(() => {
+    const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let result = jobsWithScore.filter(({ job: j }) => {
       const matchesCategory = category === "All" || j.category === category;
       const matchesCity =
         city === "All Cities" ||
         (j.location ?? "").toLowerCase().includes(city.toLowerCase());
+      const matchesOrigin =
+        origin === "All" || classifyOrigin(j.location) === origin;
       const matchesQuery =
         !q ||
         j.title.toLowerCase().includes(q) ||
         j.company.toLowerCase().includes(q) ||
         (j.location ?? "").toLowerCase().includes(q);
-      return matchesCategory && matchesCity && matchesQuery;
+      return matchesCategory && matchesCity && matchesOrigin && matchesQuery;
     });
 
     if (hasResume && sortByMatch) {
@@ -83,10 +93,44 @@ export default function JobFeed({
     }
 
     return result;
-  }, [jobsWithScore, query, category, city, sortByMatch, hasResume]);
+   }, [jobsWithScore, query, category, city, origin, sortByMatch, hasResume]);
+
+    const indiaCount = useMemo(
+    () => jobs.filter((j) => classifyOrigin(j.location) === "india").length,
+    [jobs]
+  );
+  const internationalCount = useMemo(
+    () => jobs.filter((j) => classifyOrigin(j.location) === "international").length,
+    [jobs]
+  );
 
   return (
     <div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {([
+          { key: "All" as const, label: `All (${jobs.length})` },
+          { key: "india" as const, label: `🇮🇳 India (${indiaCount})` },
+          { key: "international" as const, label: `🌍 International (${internationalCount})` },
+        ]).map((opt) => (
+          <button
+            key={opt.key}
+            data-cursor-hover
+            onClick={() => setOrigin(opt.key)}
+            className="focus-visible:outline-none"
+          >
+            <Badge
+              variant={origin === opt.key ? "default" : "outline"}
+              className={cn(
+                "cursor-pointer px-3 py-1.5 text-sm transition-colors",
+                origin === opt.key && "bg-signal text-white"
+              )}
+            >
+              {opt.label}
+            </Badge>
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
