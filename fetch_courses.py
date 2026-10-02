@@ -149,12 +149,13 @@ def call_gemini(prompt):
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0},
     }
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             res = requests.post(url, json=body, timeout=REQUEST_TIMEOUT)
-            if res.status_code == 429:
-                print("  [gemini rate limited, waiting] attempt " + str(attempt + 1))
-                time.sleep(20)
+            if res.status_code in (429, 503):
+                wait = 15 * (attempt + 1)
+                print("  [gemini busy, waiting " + str(wait) + "s] attempt " + str(attempt + 1) + " status " + str(res.status_code))
+                time.sleep(wait)
                 continue
             if not res.ok:
                 print("  [gemini http error] " + str(res.status_code) + ": " + res.text[:200])
@@ -165,6 +166,7 @@ def call_gemini(prompt):
         except Exception as e:
             print("  [gemini error] " + str(e))
             return None
+    print("  [gemini gave up after retries]")
     return None
 
 
