@@ -47,7 +47,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python telegram_fetch.py
 
-            - name: Run course fetcher
+      - name: Run course fetcher
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY_COURSES }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
